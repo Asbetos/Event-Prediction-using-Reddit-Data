@@ -1,0 +1,36 @@
+event_id,date,name,category,relevant_subreddits
+1,2023-06-05,Reddit API pricing protest announced,controversy,reddit|apolloapp|ModCoord|technology
+2,2023-06-12,Reddit blackout - 8000+ subreddits go dark,controversy,ModCoord|SubredditDrama|OutOfTheLoop|technology
+3,2023-06-14,OceanGate Titan submersible goes missing,disaster,news|worldnews|submarines|OceanGateTitan
+4,2023-06-18,Titan submersible implosion confirmed,disaster,news|worldnews|science|OceanGateTitan
+5,2023-06-22,Reddit CEO Steve Huffman AMA (heavily downvoted),controversy,reddit|IAmA|SubredditDrama
+6,2023-06-30,Supreme Court strikes down affirmative action,breaking_news,news|politics|law|SupremeCourt
+7,2023-07-01,Reddit API changes take effect / Apollo shuts down,controversy,apolloapp|technology|apple
+8,2023-07-05,Threads by Meta launches,product_launch,technology|socialmedia|Instagram
+9,2023-07-21,Barbenheimer - Barbie and Oppenheimer dual release,meme_viral,movies|boxoffice|Barbie|christophernolan
+10,2023-08-08,Maui wildfire devastates Lahaina,disaster,news|Hawaii|climate|weather
+11,2023-08-23,Chandrayaan-3 lunar landing,breaking_news,space|india|worldnews
+12,2023-08-24,Prigozhin plane crash confirmed,breaking_news,worldnews|ukraine|geopolitics
+13,2023-09-12,iPhone 15 announcement,product_launch,apple|iphone|technology
+14,2023-09-19,Unity runtime fee controversy,controversy,gamedev|Unity3D|pcgaming|Games
+15,2023-10-07,Hamas attack on Israel,breaking_news,worldnews|news|IsraelPalestine
+16,2023-10-17,Gaza hospital explosion,breaking_news,worldnews|news|IsraelPalestine
+17,2023-10-25,Speaker of the House drama - Mike Johnson elected,breaking_news,politics|news|Conservative
+18,2023-11-06,Sam Altman fired from OpenAI,controversy,technology|ChatGPT|OpenAI|MachineLearning
+19,2023-11-17,Sam Altman returns to OpenAI,breaking_news,technology|OpenAI|MachineLearning
+20,2023-11-24,Black Friday 2023 deals discourse,meme_viral,buildapcsales|deals|frugal
+21,2023-12-01,Henry Kissinger death,breaking_news,news|worldnews|history|politics
+22,2023-12-06,Google Gemini AI launch,product_launch,technology|artificial|Google
+23,2023-12-05,GTA VI trailer release,product_launch,gaming|GTA|Games
+24,2024-01-09,Alaska Airlines 737 MAX 9 door plug blowout,disaster,news|aviation|boeing
+25,2024-02-02,Taylor Swift Super Bowl / Travis Kelce frenzy,meme_viral,nfl|TaylorSwift|entertainment
+26,2024-02-15,OpenAI Sora text-to-video announcement,product_launch,technology|artificial|OpenAI
+27,2024-03-08,Reddit IPO filing,breaking_news,stocks|technology|WallStreetBets
+28,2024-03-26,Baltimore Key Bridge collapse,disaster,news|maryland|CatastrophicFailure
+29,2024-04-08,Total solar eclipse North America,breaking_news,astronomy|space|pics
+30,2024-05-13,GPT-4o announcement,product_launch,technology|ChatGPT|OpenAI
+31,2024-05-20,Iran president Raisi helicopter crash death,breaking_news,worldnews|iran|geopolitics
+32,2024-06-10,Apple WWDC 2024 / Apple Intelligence,product_launch,apple|technology|iphone
+33,2024-06-27,Biden-Trump presidential debate,controversy,politics|news|Conservative|PoliticalDiscussion
+34,2024-07-01,Supreme Court immunity ruling,breaking_news,politics|law|news|SupremeCourt
+35,2024-07-13,Trump assassination attempt Butler PA,breaking_news,news|politics|Conservative

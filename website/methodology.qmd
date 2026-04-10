@@ -1,0 +1,267 @@
+---
+title: "Methodology"
+subtitle: "Dataset, Architecture, and Pipeline Design"
+---
+
+## Problem Statement
+
+Social media platforms generate enormous volumes of real-time text that implicitly encode information about ongoing events in the world. Reddit, with its community-structured design (subreddits), provides a uniquely granular signal: when something significant happens, affected communities experience sharp, measurable surges in activity and shifts in language. The core question driving this project is whether these signals can be systematically detected, characterized, and used to classify and forecast real-world events.
+
+We frame this as a three-layer problem:
+
+1. **Detection:** Identify statistically anomalous activity patterns across subreddit time series.
+2. **Characterization:** Use NLP to extract entities, sentiment, and topics from the text produced during anomalies.
+3. **Prediction:** Train ML models to classify anomalies by event type and predict engagement sustainability.
+
+## Dataset Description
+
+### Source and Scale
+
+Our dataset consists of Reddit comments and submissions from the [Pushshift](https://pushshift.io/) archive, stored as compressed Parquet files in AWS S3.
+
+| Attribute | Value |
+|:----------|:------|
+| **Date range** | June 2023 -- July 2024 (14 months) |
+| **Total size** | ~478 GB (Parquet, snappy compressed) |
+| **Data types** | Comments + Submissions |
+| **Storage** | S3 bucket `ven-bda-s3-v2` |
+| **Format** | Parquet, partitioned by month |
+
+### Schema
+
+The core fields used in analysis:
+
+::: {.panel-tabset}
+
+#### Comments Schema
+
+| Column | Type | Description |
+|:-------|:-----|:------------|
+| `id` | string | Unique comment identifier |
+| `subreddit` | string | Subreddit name |
+| `author` | string | Username |
+| `body` | string | Comment text |
+| `created_utc` | long | Unix timestamp |
+| `score` | int | Net upvotes |
+| `parent_id` | string | Parent comment or submission ID |
+| `link_id` | string | Submission ID this comment belongs to |
+
+#### Submissions Schema
+
+| Column | Type | Description |
+|:-------|:-----|:------------|
+| `id` | string | Unique submission identifier |
+| `subreddit` | string | Subreddit name |
+| `author` | string | Username |
+| `title` | string | Submission title |
+| `selftext` | string | Body text (self posts) |
+| `created_utc` | long | Unix timestamp |
+| `score` | int | Net upvotes |
+| `num_comments` | int | Comment count |
+| `url` | string | Link URL (link posts) |
+
+:::
+
+## Architecture
+
+### Two-Machine Design
+
+```{mermaid}
+flowchart LR
+    S3[(AWS S3<br/>478 GB Parquet)]
+
+    subgraph EC2["EC2 t3.large (2 vCPU, 8 GB)"]
+        direction TB
+        Spark[PySpark Local Mode]
+        EDA[EDA & Feature Eng.]
+        Quarto[Quarto Website]
+        Spark --> EDA --> Quarto
+    end
+
+    subgraph RunPod["RunPod A100 80 GB GPU"]
+        direction TB
+        cuDF[RAPIDS cuDF]
+        NLP["NLP<br/>(spaCy, RoBERTa,<br/>BERTopic)"]
+        ML["ML<br/>(cuML RF, XGBoost)"]
+        cuDF --> NLP --> ML
+    end
+
+    S3 <-->|S3A connector| EC2
+    S3 <-->|s3fs / boto3| RunPod
+    RunPod -->|figures + results| S3
+    S3 -->|figures| Quarto
+```
+
+**Why two machines?** The EC2 t3.large provides always-on, low-cost compute for iterative EDA and aggregation work that benefits from PySpark's lazy evaluation and Adaptive Query Execution. However, transformer-based NLP models (RoBERTa, sentence-transformers) and GPU-accelerated ML (cuML) require an A100 GPU. Rather than running an expensive GPU instance 24/7, we use RunPod's on-demand A100 pods only when needed for NLP and ML stages.
+
+### Spark Configuration for t3.large
+
+The EC2 instance has only 2 vCPUs and 7.6 GB of RAM, so Spark is carefully tuned:
+
+```{python}
+#| code-fold: true
+#| code-summary: "Spark session configuration"
+#| eval: false
+
+from pyspark.sql import SparkSession
+
+spark = (
+    SparkSession.builder
+    .appName("RedditEWS")
+    .master("local[2]")                                          # 2 vCPUs
+
+    # Memory: 4 GB driver + ~400 MB overhead = 4.4 GB for JVM
+    .config("spark.driver.memory", "4g")
+    .config("spark.driver.maxResultSize", "1g")
+
+    # Shuffle: small partition count to avoid OOM on joins
+    .config("spark.sql.shuffle.partitions", "8")
+    .config("spark.default.parallelism", "4")
+    .config("spark.sql.files.maxPartitionBytes", "128m")
+
+    # Adaptive Query Execution: auto-coalesce small partitions
+    .config("spark.sql.adaptive.enabled", "true")
+    .config("spark.sql.adaptive.coalescePartitions.enabled", "true")
+    .config("spark.sql.adaptive.coalescePartitions.minPartitionNum", "2")
+
+    # Kryo serialization for faster shuffles
+    .config("spark.serializer",
+            "org.apache.spark.serializer.KryoSerializer")
+
+    # Arrow for efficient pandas <-> Spark conversion
+    .config("spark.sql.execution.arrow.pyspark.enabled", "true")
+
+    # Memory fractions: more execution, less storage caching
+    .config("spark.memory.fraction", "0.6")
+    .config("spark.memory.storageFraction", "0.3")
+
+    # Spill to local SSD when memory is exhausted
+    .config("spark.local.dir", "/home/ubuntu/Event-Prediction-using-Reddit-Data/data/spark-tmp")
+
+    # S3A access
+    .config("spark.hadoop.fs.s3a.impl",
+            "org.apache.hadoop.fs.s3a.S3AFileSystem")
+    .config("spark.hadoop.fs.s3a.aws.credentials.provider",
+            "com.amazonaws.auth.DefaultAWSCredentialsProviderChain")
+
+    .getOrCreate()
+)
+spark.sparkContext.setLogLevel("WARN")
+```
+
+Key design choices:
+
+- **`local[2]`**: Matches the 2 vCPUs available on t3.large.
+- **4 GB driver memory**: Leaves ~3 GB for Python processes and the OS.
+- **8 shuffle partitions**: Default of 200 would create too many tiny tasks on a 2-core machine.
+- **AQE enabled**: Automatically coalesces small partitions after shuffles, critical for skewed Reddit data.
+- **Disk spill**: When memory is exhausted, Spark spills to local SSD rather than failing with OOM.
+
+## Pipeline Stages
+
+The full pipeline consists of 11 stages, split across the two machines:
+
+| Stage | Name | Machine | Description |
+|:-----:|:-----|:--------|:------------|
+| 1 | Hourly aggregation | EC2 | Aggregate raw comment/submission counts per subreddit per hour |
+| 2 | Anomaly detection | EC2 | Rolling z-score over 7-day windows; flag hours with z > 3.0 |
+| 3 | Anomaly clustering | EC2 | Merge adjacent anomalous hours within 6-hour gaps into events |
+| 4 | Event--subreddit mapping | EC2 | Cluster anomalies across subreddits; identify propagation patterns |
+| 5 | Spike shape analysis | EC2 | Classify spike morphology (sharp, sustained, double-peak, plateau) |
+| 6 | Temporal pattern analysis | EC2 | Extract hour-of-day, day-of-week distributions of anomalies |
+| 7 | Named entity recognition | RunPod | spaCy `en_core_web_trf` on anomaly-window text; entity surge detection |
+| 8 | Sentiment analysis | RunPod | RoBERTa-based sentiment on anomaly vs. baseline text |
+| 9 | Topic modeling | RunPod | BERTopic with sentence-transformers on anomaly text |
+| 10 | Event classification | RunPod | cuML Random Forest, XGBoost, Spark MLlib RF on combined features |
+| 11 | Spike sustain prediction | RunPod | Binary classification from early (2--4 hour) spike features |
+
+### Data Flow
+
+```{mermaid}
+flowchart TD
+    RAW[("S3: Raw Parquet<br/>478 GB")] --> S1[Stage 1: Hourly Aggregation]
+    S1 --> S2[Stage 2: Anomaly Detection]
+    S2 --> S3[Stage 3: Anomaly Clustering]
+    S3 --> S4[Stage 4: Cross-Subreddit Mapping]
+    S3 --> S5[Stage 5: Spike Shapes]
+    S3 --> S6[Stage 6: Temporal Patterns]
+
+    S4 --> FEAT[Feature Matrix]
+    S5 --> FEAT
+    S6 --> FEAT
+
+    RAW --> S7[Stage 7: NER]
+    RAW --> S8[Stage 8: Sentiment]
+    RAW --> S9[Stage 9: Topics]
+
+    S7 --> FEAT
+    S8 --> FEAT
+    S9 --> FEAT
+
+    FEAT --> S10[Stage 10: Classification]
+    FEAT --> S11[Stage 11: Sustain Prediction]
+
+    GT[(Ground Truth<br/>35 Events)] --> S10
+    GT --> S11
+
+    S10 --> RESULTS[Results & Figures]
+    S11 --> RESULTS
+
+    style RAW fill:#3498db,color:#fff
+    style GT fill:#2ecc71,color:#fff
+    style RESULTS fill:#e74c3c,color:#fff
+```
+
+## Technology Stack
+
+| Category | Tools | Purpose |
+|:---------|:------|:--------|
+| **Distributed processing** | PySpark 3.5 | EDA, aggregation, feature engineering on 478 GB data |
+| **GPU data manipulation** | RAPIDS cuDF | Pandas-like API on GPU for fast dataframe operations |
+| **NER** | spaCy `en_core_web_trf` | Transformer-based named entity recognition |
+| **Sentiment** | Hugging Face `cardiffnlp/twitter-roberta-base-sentiment-latest` | Three-class sentiment (positive/neutral/negative) |
+| **Topic modeling** | BERTopic + sentence-transformers | Neural topic discovery from anomaly text |
+| **Classification** | cuML Random Forest, XGBoost, Spark MLlib RF | Event category prediction |
+| **Visualization** | matplotlib, plotly, networkx, wordcloud | Static and interactive figures |
+| **Website** | Quarto | Reproducible academic report as a static website |
+| **Storage** | AWS S3, Parquet | Columnar storage with predicate pushdown |
+
+## Ground Truth Curation
+
+We manually curated a catalog of **35 major events** spanning June 2023 through July 2024, distributed across five categories:
+
+| Category | Count | Examples |
+|:---------|:-----:|:--------|
+| Breaking news | 14 | Hamas attack on Israel, Baltimore Key Bridge collapse, Reddit IPO |
+| Controversy | 7 | Reddit API pricing protest, Sam Altman fired from OpenAI, Biden-Trump debate |
+| Product launch | 7 | Threads by Meta, iPhone 15, GPT-4o, Apple Intelligence |
+| Disaster | 4 | OceanGate Titan implosion, Maui wildfire, Alaska Airlines blowout |
+| Meme / viral | 3 | Barbenheimer, Taylor Swift Super Bowl, Black Friday discourse |
+
+Each event record includes:
+
+- **Date**: The primary date the event unfolded.
+- **Name**: A human-readable description.
+- **Category**: One of the five types above.
+- **Relevant subreddits**: Pipe-delimited list of subreddits expected to show anomalous activity (e.g., `news|worldnews|politics`).
+
+```{python}
+#| code-fold: true
+#| code-summary: "Ground truth events CSV (first 10 rows)"
+#| eval: false
+
+import pandas as pd
+
+events = pd.read_csv("../data/ground_truth/events.csv")
+events.head(10)
+```
+
+The ground truth serves two purposes: (1) it provides labeled training data for the event classification model (Stage 10), and (2) it enables recall-based evaluation of the anomaly detection pipeline --- we measure what fraction of the 35 known events the z-score method successfully detects.
+
+### Category Definitions
+
+- **Breaking news**: Events with broad public impact reported across mainstream news outlets (e.g., Supreme Court rulings, geopolitical incidents, natural phenomena like the 2024 solar eclipse).
+- **Controversy**: Events characterized by strong community disagreement, outrage, or backlash (e.g., Reddit API pricing changes, CEO AMA backlash).
+- **Product launch**: Announcements of new technology products or services (e.g., iPhone 15, Google Gemini, GPT-4o).
+- **Disaster**: Natural or man-made catastrophes causing loss of life or significant damage (e.g., Maui wildfire, OceanGate implosion).
+- **Meme / viral**: Culturally driven surges in activity around entertainment, humor, or social phenomena (e.g., Barbenheimer dual release weekend).
