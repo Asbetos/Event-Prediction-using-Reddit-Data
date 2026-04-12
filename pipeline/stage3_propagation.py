@@ -104,8 +104,8 @@ def main():
         aw.join(bw, on=(aw["sub_a"] < bw["sub_b"]))
         .filter(
             # windows overlap or are within gap
-            (F.col("start_a").cast("long") - F.col("end_b").cast("long") <= gap_seconds)
-            & (F.col("start_b").cast("long") - F.col("end_a").cast("long") <= gap_seconds)
+            (F.unix_timestamp(F.col("start_a").cast("timestamp")) - F.unix_timestamp(F.col("end_b").cast("timestamp")) <= gap_seconds)
+            & (F.unix_timestamp(F.col("start_b").cast("timestamp")) - F.unix_timestamp(F.col("end_a").cast("timestamp")) <= gap_seconds)
         )
         .select("sub_a", "wid_a", "start_a", "sub_b", "wid_b", "start_b")
     )
@@ -186,8 +186,8 @@ def main():
         )
         .withColumn(
             "total_duration_hours",
-            (F.col("last_end_time").cast("long")
-             - F.col("first_detection_time").cast("long")) / 3600,
+            (F.unix_timestamp(F.col("last_end_time").cast("timestamp"))
+             - F.unix_timestamp(F.col("first_detection_time").cast("timestamp"))) / 3600,
         )
     )
 

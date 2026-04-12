@@ -69,7 +69,7 @@ def main():
 
     hourly = hourly.withColumn(
         "hour_bucket_seconds",
-        F.col("hour_bucket").cast("long"),
+        F.unix_timestamp(F.col("hour_bucket").cast("timestamp")),
     )
 
     w_rolling = (
@@ -118,7 +118,7 @@ def main():
         "gap_seconds",
         F.when(
             F.col("prev_hour_bucket").isNotNull(),
-            F.col("hour_bucket").cast("long") - F.col("prev_hour_bucket").cast("long"),
+            F.unix_timestamp(F.col("hour_bucket").cast("timestamp")) - F.unix_timestamp(F.col("prev_hour_bucket").cast("timestamp")),
         ).otherwise(F.lit(merge_gap_seconds + 1).cast("long")),
     )
 
@@ -157,7 +157,7 @@ def main():
         )
         .withColumn(
             "duration_hours",
-            (F.col("window_end").cast("long") - F.col("window_start").cast("long")) / 3600 + 1,
+            (F.unix_timestamp(F.col("window_end").cast("timestamp")) - F.unix_timestamp(F.col("window_start").cast("timestamp"))) / 3600 + 1,
         )
     )
 
