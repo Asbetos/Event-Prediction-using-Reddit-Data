@@ -2,7 +2,7 @@
 
 An early warning system that detects and predicts real-world events by analyzing activity patterns across 500 subreddits. Processes 478 GB of Reddit data (June 2023 -- July 2024) through an 11-stage pipeline spanning anomaly detection, cross-subreddit propagation analysis, NLP (NER, sentiment, topic modeling), event classification, and forecasting.
 
-**Course:** DSAN 6000 | **Team:** Group 3
+**Course:** DATS 6450 | **Team:** Group 3
 
 ## Architecture
 
