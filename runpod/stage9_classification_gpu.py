@@ -53,13 +53,14 @@ except ImportError:
     print("XGBoost not available")
 
 # ── Logging ─────────────────────────────────────────────────────────────────
+os.makedirs("/workspace/logs", exist_ok=True)
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
     handlers=[
         logging.StreamHandler(sys.stdout),
-        logging.FileHandler("stage9_classification.log"),
+        logging.FileHandler("/workspace/logs/stage9_classification.log"),
     ],
 )
 logger = logging.getLogger(__name__)

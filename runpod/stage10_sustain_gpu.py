@@ -42,14 +42,21 @@ except ImportError:
     from sklearn.ensemble import RandomForestClassifier
     print("cuML not available - using sklearn RandomForest")
 
+# Allow CPU-only mode when GPU is shared with NLP stages (run_all_gpu.sh)
+if os.environ.get("FORCE_CPU", "0") == "1":
+    GPU_ML = False
+    from sklearn.ensemble import RandomForestClassifier
+    print("FORCE_CPU=1: Using sklearn on EPYC cores to avoid GPU contention")
+
 # ── Logging ─────────────────────────────────────────────────────────────────
+os.makedirs("/workspace/logs", exist_ok=True)
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
     handlers=[
         logging.StreamHandler(sys.stdout),
-        logging.FileHandler("stage10_sustain.log"),
+        logging.FileHandler("/workspace/logs/stage10_sustain.log"),
     ],
 )
 logger = logging.getLogger(__name__)

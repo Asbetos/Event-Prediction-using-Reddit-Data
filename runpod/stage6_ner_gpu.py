@@ -40,13 +40,14 @@ except ImportError:
     print("cuDF not available - using pandas")
 
 # ── Logging ─────────────────────────────────────────────────────────────────
+os.makedirs("/workspace/logs", exist_ok=True)
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
     handlers=[
         logging.StreamHandler(sys.stdout),
-        logging.FileHandler("stage6_ner.log"),
+        logging.FileHandler("/workspace/logs/stage6_ner.log"),
     ],
 )
 logger = logging.getLogger(__name__)
@@ -55,7 +56,7 @@ logger = logging.getLogger(__name__)
 S3_BUCKET = "ven-bda-s3-v2"
 S3_BASE = f"s3://{S3_BUCKET}/reddit-data/parquet"
 S3_INTERMEDIATE = f"s3://{S3_BUCKET}/reddit-data/intermediate"
-NER_BATCH_SIZE = 10_000
+NER_BATCH_SIZE = 4_000  # Reduced for shared GPU (other processes on this pod use ~47GB)
 ENTITY_TYPES = {"PERSON", "ORG", "GPE"}
 MONTHS = [(2023, m) for m in range(6, 13)] + [(2024, m) for m in range(1, 8)]
 

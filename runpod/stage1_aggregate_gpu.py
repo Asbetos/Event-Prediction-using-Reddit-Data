@@ -39,13 +39,14 @@ except ImportError:
     print("WARNING: cuDF not available - falling back to pandas (will be slow)")
 
 # ── Logging setup ───────────────────────────────────────────────────────────
+os.makedirs("/workspace/logs", exist_ok=True)
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
     handlers=[
         logging.StreamHandler(sys.stdout),
-        logging.FileHandler("stage1_aggregate.log"),
+        logging.FileHandler("/workspace/logs/stage1_aggregate.log"),
     ],
 )
 logger = logging.getLogger(__name__)
@@ -197,11 +198,12 @@ def process_one_month(year, month, storage_options):
             del df
             gc.collect()
             if GPU_AVAILABLE:
-                import cudf
-                # Force GPU memory release
+                # Safe GPU cleanup — NEVER use rmm.reinitialize() as it
+                # resets the entire GPU memory manager and will crash
+                # other CUDA processes on this pod (eagle3, sweep, etc.)
                 try:
-                    import rmm
-                    rmm.reinitialize()
+                    import torch
+                    torch.cuda.empty_cache()
                 except Exception:
                     pass
 
