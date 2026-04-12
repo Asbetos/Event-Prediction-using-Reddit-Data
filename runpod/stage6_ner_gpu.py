@@ -114,10 +114,11 @@ def read_anomaly_windows(storage_options):
     return df
 
 
-def read_month_text(year, month, storage_options):
-    """Read one month of text data from S3. Returns a DataFrame with
-    subreddit, timestamp, and text columns. Reads ONCE for all windows."""
+def read_month_text(year, month, storage_options, subreddits):
+    """Read one month of text data from S3, filtered to only the given subreddits.
+    Returns a DataFrame with subreddit, timestamp, and text columns."""
     all_dfs = []
+    sub_filter = [("subreddit", "in", subreddits)]
 
     for data_type in ["comments", "submissions"]:
         path = f"{S3_BASE}/{data_type}/yyyy={year}/mm={month:02d}/"
@@ -130,6 +131,7 @@ def read_month_text(year, month, storage_options):
                 columns=cols,
                 storage_options=storage_options,
                 engine="pyarrow",
+                filters=sub_filter,
             )
             if len(df) == 0:
                 continue
@@ -151,6 +153,7 @@ def read_month_text(year, month, storage_options):
             columns=["subreddit", "created_utc", "title"],
             storage_options=storage_options,
             engine="pyarrow",
+            filters=sub_filter,
         )
         if len(df) > 0:
             df["ts"] = pd.to_datetime(df["created_utc"], unit="s")
@@ -256,10 +259,13 @@ def main():
             logger.info(f"  No anomaly windows in {year}-{month:02d}, skipping")
             continue
 
-        logger.info(f"Processing {year}-{month:02d}: {len(month_windows)} windows")
+        # Get unique subreddits needed for this month
+        month_subreddits = month_windows["subreddit"].unique().tolist()
+        logger.info(f"Processing {year}-{month:02d}: {len(month_windows)} windows, "
+                     f"{len(month_subreddits)} subreddits")
 
-        # Read this month's text data ONCE
-        month_df = read_month_text(year, month, storage_options)
+        # Read this month's text data ONCE, filtered to relevant subreddits
+        month_df = read_month_text(year, month, storage_options, month_subreddits)
         if len(month_df) == 0:
             logger.warning(f"  No text data for {year}-{month:02d}")
             windows_processed += len(month_windows)
