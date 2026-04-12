@@ -103,6 +103,9 @@ def read_anomaly_windows(storage_options):
     path = f"{S3_INTERMEDIATE}/anomaly_windows.parquet"
     logger.info(f"Reading anomaly windows from {path}")
     df = pd.read_parquet(path, storage_options=storage_options)
+    # Normalize column names from Stage 2 (window_start/window_end -> start_time/end_time)
+    if "window_start" in df.columns:
+        df = df.rename(columns={"window_start": "start_time", "window_end": "end_time"})
     logger.info(f"  Loaded {len(df)} anomaly windows")
     return df
 

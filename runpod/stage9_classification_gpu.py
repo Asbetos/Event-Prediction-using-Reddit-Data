@@ -131,6 +131,8 @@ def load_intermediate_data(storage_options):
         path = f"{S3_INTERMEDIATE}/{filename}"
         try:
             df = pd.read_parquet(path, storage_options=storage_options)
+            if name == "anomaly_windows" and "window_start" in df.columns:
+                df = df.rename(columns={"window_start": "start_time", "window_end": "end_time"})
             data[name] = df
             logger.info(f"  Loaded {name}: {len(df)} rows")
         except Exception as e:
