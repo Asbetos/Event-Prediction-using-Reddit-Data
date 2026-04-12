@@ -57,12 +57,12 @@ def classify_spike_shape(ts_values):
     str : one of "sharp_spike", "sustained_plateau", "double_peak", "slow_burn"
     """
     arr = np.array(ts_values, dtype=float)
-    if len(arr) == 0 or np.nanmax(arr) == 0:
+    if len(arr) == 0 or np.all(np.isnan(arr)) or np.nanmax(arr) == 0:
         return "sharp_spike"
 
     # Normalize to 0-1
     vmin, vmax = np.nanmin(arr), np.nanmax(arr)
-    if vmax - vmin < 1e-9:
+    if np.isnan(vmin) or np.isnan(vmax) or vmax - vmin < 1e-9:
         return "sustained_plateau"
     norm = (arr - vmin) / (vmax - vmin)
 
@@ -148,13 +148,23 @@ def main():
         "peak_z_score", "mean_z_score", "duration_hours",
     ).toPandas()
 
-    hourly_pd = hourly.select(
+    # Filter hourly data to only subreddits that have anomalies (huge speedup)
+    anomaly_subs = aw_pd["subreddit"].unique().tolist()
+    hourly_filtered = hourly.filter(
+        F.col("subreddit").isin(anomaly_subs)
+    ).select(
         "subreddit", "hour_bucket", "post_count", "unique_authors", "mean_score",
-    ).toPandas()
+    )
+
+    hourly_pd = hourly_filtered.toPandas()
     hourly_pd["hour_bucket"] = pd.to_datetime(hourly_pd["hour_bucket"])
     hourly_pd = hourly_pd.sort_values(["subreddit", "hour_bucket"])
 
     log.info("Extracting time series for %d anomaly windows ...", len(aw_pd))
+
+    # Pre-group hourly data by subreddit for fast per-window lookups
+    hourly_by_sub = {sub: grp.reset_index(drop=True)
+                     for sub, grp in hourly_pd.groupby("subreddit")}
 
     profiles = []
     ts_examples = {
@@ -163,45 +173,44 @@ def main():
         "double_peak": None,
         "slow_burn": None,
     }
+    skipped = 0
 
     for _, aw_row in aw_pd.iterrows():
         sub = aw_row["subreddit"]
         ws = pd.Timestamp(aw_row["window_start"])
         we = pd.Timestamp(aw_row["window_end"])
 
+        sub_hourly = hourly_by_sub.get(sub)
+        if sub_hourly is None or sub_hourly.empty:
+            skipped += 1
+            continue
+
         extract_start = ws - pd.Timedelta(hours=PRE_HOURS)
         extract_end = we + pd.Timedelta(hours=POST_HOURS)
 
-        mask = (
-            (hourly_pd["subreddit"] == sub)
-            & (hourly_pd["hour_bucket"] >= extract_start)
-            & (hourly_pd["hour_bucket"] <= extract_end)
-        )
-        ts = hourly_pd.loc[mask].sort_values("hour_bucket")
+        hb = sub_hourly["hour_bucket"]
+        ts = sub_hourly.loc[
+            (hb >= extract_start) & (hb <= extract_end)
+        ].sort_values("hour_bucket")
 
         if ts.empty:
+            skipped += 1
             continue
 
         ts_values = ts["post_count"].values.tolist()
         spike_shape = classify_spike_shape(ts_values)
 
         # Post-spike engagement (after window_end)
-        post_mask = (
-            (hourly_pd["subreddit"] == sub)
-            & (hourly_pd["hour_bucket"] > we)
-            & (hourly_pd["hour_bucket"] <= we + pd.Timedelta(hours=POST_HOURS))
-        )
-        post_ts = hourly_pd.loc[post_mask]
+        post_ts = sub_hourly.loc[
+            (hb > we) & (hb <= we + pd.Timedelta(hours=POST_HOURS))
+        ]
         post_spike_avg_score = float(post_ts["mean_score"].mean()) if not post_ts.empty else 0.0
         post_spike_unique_authors = float(post_ts["unique_authors"].mean()) if not post_ts.empty else 0.0
 
         # Pre-spike baseline
-        pre_mask = (
-            (hourly_pd["subreddit"] == sub)
-            & (hourly_pd["hour_bucket"] >= extract_start)
-            & (hourly_pd["hour_bucket"] < ws)
-        )
-        pre_ts = hourly_pd.loc[pre_mask]
+        pre_ts = sub_hourly.loc[
+            (hb >= extract_start) & (hb < ws)
+        ]
         baseline_avg_score = float(pre_ts["mean_score"].mean()) if not pre_ts.empty else 0.0
 
         profiles.append({
@@ -218,7 +227,7 @@ def main():
             "baseline_avg_score": baseline_avg_score,
             "engagement_ratio": (
                 post_spike_avg_score / baseline_avg_score
-                if baseline_avg_score > 0 else 0.0
+                if baseline_avg_score > 0 else float("nan")
             ),
         })
 
@@ -234,6 +243,9 @@ def main():
                 "values": ts_values,
                 "peak_z": float(aw_row["peak_z_score"]),
             }
+
+    if skipped > 0:
+        log.info("Skipped %d anomaly windows with no hourly data.", skipped)
 
     profiles_pd = pd.DataFrame(profiles)
     log.info("Spike profiles computed: %d", len(profiles_pd))

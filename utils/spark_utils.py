@@ -20,4 +20,4 @@ def write_intermediate(df, name: str, mode: str = "overwrite"):
     path = os.path.join(LOCAL_INTERMEDIATE, name)
     os.makedirs(os.path.dirname(path), exist_ok=True)
     df.write.mode(mode).parquet(path)
-    print(f"  Wrote {path} ({df.count():,} rows)")
+    print(f"  Wrote {path}")

@@ -99,11 +99,9 @@ def build_feature_matrix(spark):
     features = features.withColumn(
         "hour_of_day", F.hour("window_start").cast(DoubleType())
     ).withColumn(
-        "day_of_week", (F.dayofweek("window_start") - 2).cast(DoubleType())
-    ).withColumn(
         "day_of_week",
-        F.when(F.col("day_of_week") < 0, F.col("day_of_week") + 7)
-        .otherwise(F.col("day_of_week")),
+        # Spark dayofweek: 1=Sun,2=Mon,...,7=Sat -> remap to 0=Mon..6=Sun
+        ((F.dayofweek("window_start") + 5) % 7).cast(DoubleType()),
     ).withColumn(
         "is_weekend",
         F.when(F.col("day_of_week").isin(5.0, 6.0), 1.0).otherwise(0.0),

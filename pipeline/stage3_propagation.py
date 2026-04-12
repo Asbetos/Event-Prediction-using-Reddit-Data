@@ -100,12 +100,13 @@ def main():
     gap_seconds = CO_OCCURRENCE_WINDOW_HOURS * 3600
 
     # Overlapping or within 48h of each other
+    # Two windows co-occur if neither ends more than gap_seconds before the other starts.
+    # i.e. NOT (end_a < start_b - gap) AND NOT (end_b < start_a - gap)
     co_occur = (
         aw.join(bw, on=(aw["sub_a"] < bw["sub_b"]))
         .filter(
-            # windows overlap or are within gap
-            (F.unix_timestamp(F.col("start_a").cast("timestamp")) - F.unix_timestamp(F.col("end_b").cast("timestamp")) <= gap_seconds)
-            & (F.unix_timestamp(F.col("start_b").cast("timestamp")) - F.unix_timestamp(F.col("end_a").cast("timestamp")) <= gap_seconds)
+            (F.unix_timestamp(F.col("end_a").cast("timestamp")) >= F.unix_timestamp(F.col("start_b").cast("timestamp")) - gap_seconds)
+            & (F.unix_timestamp(F.col("end_b").cast("timestamp")) >= F.unix_timestamp(F.col("start_a").cast("timestamp")) - gap_seconds)
         )
         .select("sub_a", "wid_a", "start_a", "sub_b", "wid_b", "start_b")
     )
@@ -162,6 +163,10 @@ def main():
     ).collect()[0]
     median_posts = stats_row["median_posts"]
     p75_posts = stats_row["p75_posts"]
+    if median_posts is None:
+        median_posts = 0
+    if p75_posts is None:
+        p75_posts = 0
     log.info("Subreddit total_posts median=%.0f, p75=%.0f", median_posts, p75_posts)
 
     # Per-cluster aggregation
@@ -259,7 +264,7 @@ def main():
         # Compute offset from first detection in each cluster
         first_times = scatter_data.groupby("event_cluster_id")["window_start"].min()
         scatter_data = scatter_data.merge(
-            first_times.rename("cluster_first"), on="event_cluster_id"
+            first_times.rename("cluster_first").reset_index(), on="event_cluster_id"
         )
         scatter_data["offset_hours"] = (
             (scatter_data["window_start"] - scatter_data["cluster_first"])

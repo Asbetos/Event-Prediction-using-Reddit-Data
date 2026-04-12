@@ -89,12 +89,9 @@ def main():
     hourly = hourly.withColumn(
         "hour_of_day", F.hour("hour_bucket")
     ).withColumn(
-        "day_of_week", F.dayofweek("hour_bucket") - 2
-        # Spark dayofweek: 1=Sun..7=Sat -> shift to 0=Mon..6=Sun
-    ).withColumn(
         "day_of_week",
-        F.when(F.col("day_of_week") < 0, F.col("day_of_week") + 7)
-        .otherwise(F.col("day_of_week")),
+        # Spark dayofweek: 1=Sun,2=Mon,...,7=Sat -> remap to 0=Mon..6=Sun
+        (F.dayofweek("hour_bucket") + 5) % 7,
     )
 
     # Baseline temporal profile: average activity by (hour, dow)
@@ -114,11 +111,8 @@ def main():
     anomaly_windows = anomaly_windows.withColumn(
         "hour_of_day", F.hour("window_start")
     ).withColumn(
-        "day_of_week", F.dayofweek("window_start") - 2
-    ).withColumn(
         "day_of_week",
-        F.when(F.col("day_of_week") < 0, F.col("day_of_week") + 7)
-        .otherwise(F.col("day_of_week")),
+        (F.dayofweek("window_start") + 5) % 7,
     )
 
     anomaly_profile = (
@@ -137,11 +131,8 @@ def main():
     gt_temporal = None
     if gt is not None:
         gt = gt.withColumn(
-            "day_of_week", F.dayofweek("date") - 2
-        ).withColumn(
             "day_of_week",
-            F.when(F.col("day_of_week") < 0, F.col("day_of_week") + 7)
-            .otherwise(F.col("day_of_week")),
+            (F.dayofweek("date") + 5) % 7,
         )
 
         gt_temporal = (
@@ -175,11 +166,8 @@ def main():
     try:
         prop_events = read_intermediate(spark, "propagation_events.parquet")
         prop_events = prop_events.withColumn(
-            "day_of_week", F.dayofweek("first_detection_time") - 2
-        ).withColumn(
             "day_of_week",
-            F.when(F.col("day_of_week") < 0, F.col("day_of_week") + 7)
-            .otherwise(F.col("day_of_week")),
+            (F.dayofweek("first_detection_time") + 5) % 7,
         ).withColumn(
             "is_weekend",
             F.when(F.col("day_of_week").isin(5, 6), True).otherwise(False),
@@ -286,7 +274,9 @@ def main():
 
     # ----- Summary stats -------------------------------------------------
     temporal_pd = temporal_out.toPandas()
-    peak_slot = temporal_pd.loc[temporal_pd["anomaly_count"].idxmax()] if not temporal_pd.empty else None
+    peak_slot = None
+    if not temporal_pd.empty and temporal_pd["anomaly_count"].notna().any() and temporal_pd["anomaly_count"].sum() > 0:
+        peak_slot = temporal_pd.loc[temporal_pd["anomaly_count"].idxmax()]
 
     print("\n--- Stage 5 Summary ---")
     print(f"  Temporal pattern rows       : {len(temporal_pd):,}")

@@ -101,7 +101,16 @@ def main():
     log.info("Anomalous hours (z > %.1f): %s", ZSCORE_THRESHOLD, f"{anomaly_count:,}")
 
     if anomaly_count == 0:
-        log.warning("No anomalies detected -- nothing to merge. Exiting.")
+        log.warning("No anomalies detected. Writing empty output.")
+        empty_schema = (
+            "window_id string, subreddit string, "
+            "window_start timestamp, window_end timestamp, "
+            "peak_z_score double, mean_z_score double, "
+            "anomaly_hours long, peak_post_count long, mean_post_count double, "
+            "duration_hours double"
+        )
+        empty_df = spark.createDataFrame([], schema=empty_schema)
+        write_intermediate(empty_df, "anomaly_windows.parquet")
         spark.stop()
         return
 
@@ -157,7 +166,7 @@ def main():
         )
         .withColumn(
             "duration_hours",
-            (F.unix_timestamp(F.col("window_end").cast("timestamp")) - F.unix_timestamp(F.col("window_start").cast("timestamp"))) / 3600 + 1,
+            (F.unix_timestamp(F.col("window_end").cast("timestamp")) - F.unix_timestamp(F.col("window_start").cast("timestamp"))) / 3600,
         )
     )
 

@@ -9,11 +9,11 @@ PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 def create_spark_session(app_name: str = "RedditEWS",
-                         driver_memory: str = "4g") -> SparkSession:
-    """Create a Spark session optimized for t3.large.
+                         driver_memory: str = "3g") -> SparkSession:
+    """Create a Spark session optimized for t3.large (2 vCPU, 7.6 GB RAM).
 
     Memory budget:
-      JVM driver: 4 GB | JVM overhead: ~400 MB | Python: ~3 GB | OS: ~200 MB
+      JVM driver: 3 GB | JVM overhead: ~400 MB | Python: ~3.5 GB | OS: ~700 MB
     """
     spark = (
         SparkSession.builder
@@ -22,17 +22,17 @@ def create_spark_session(app_name: str = "RedditEWS",
 
         # Memory
         .config("spark.driver.memory", driver_memory)
-        .config("spark.driver.maxResultSize", "1g")
+        .config("spark.driver.maxResultSize", "512m")
 
-        # Shuffle / partitions
-        .config("spark.sql.shuffle.partitions", "8")
-        .config("spark.default.parallelism", "4")
-        .config("spark.sql.files.maxPartitionBytes", "128m")
+        # Shuffle / partitions — tuned for 2 cores
+        .config("spark.sql.shuffle.partitions", "4")
+        .config("spark.default.parallelism", "2")
+        .config("spark.sql.files.maxPartitionBytes", "256m")
 
         # Adaptive Query Execution
         .config("spark.sql.adaptive.enabled", "true")
         .config("spark.sql.adaptive.coalescePartitions.enabled", "true")
-        .config("spark.sql.adaptive.coalescePartitions.minPartitionNum", "2")
+        .config("spark.sql.adaptive.coalescePartitions.minPartitionNum", "1")
 
         # Serialization
         .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
@@ -40,9 +40,9 @@ def create_spark_session(app_name: str = "RedditEWS",
         # Arrow for pandas
         .config("spark.sql.execution.arrow.pyspark.enabled", "true")
 
-        # Spill to disk
-        .config("spark.memory.fraction", "0.6")
-        .config("spark.memory.storageFraction", "0.3")
+        # Memory fractions — lower JVM fraction leaves more for Python/pandas
+        .config("spark.memory.fraction", "0.4")
+        .config("spark.memory.storageFraction", "0.2")
         .config("spark.local.dir", os.path.join(PROJECT_DIR, "data", "spark-tmp"))
 
         # S3A access

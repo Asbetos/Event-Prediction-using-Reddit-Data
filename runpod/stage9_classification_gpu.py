@@ -74,7 +74,7 @@ GROUND_TRUTH_PATH = os.path.join(PROJECT_DIR, "data", "ground_truth", "events.cs
 EVENT_CATEGORIES = ["breaking_news", "controversy", "product_launch", "disaster", "meme_viral"]
 
 FEATURE_COLUMNS = [
-    "z_score", "duration_hours", "sentiment_shift", "entity_count",
+    "peak_z_score", "duration_hours", "sentiment_shift", "entity_count",
     "propagation_speed", "num_subreddits", "hour_of_day", "is_weekend",
     "dominant_topic", "mean_score", "unique_authors", "post_count",
     "anomaly_mean_sentiment", "anomaly_std_sentiment",
@@ -216,9 +216,11 @@ def build_feature_matrix(anomaly_windows, entities, sentiment, topics, matches):
         ent_agg = entities.groupby("window_id").agg(
             entity_count=("count", "sum"),
             unique_entities=("entity_text", "nunique"),
-            person_count=("count", lambda x: x[entities.loc[x.index, "entity_label"] == "PERSON"].sum()),
-            org_count=("count", lambda x: x[entities.loc[x.index, "entity_label"] == "ORG"].sum()),
         ).reset_index()
+        person_counts = entities[entities["entity_label"] == "PERSON"].groupby("window_id")["count"].sum().rename("person_count")
+        org_counts = entities[entities["entity_label"] == "ORG"].groupby("window_id")["count"].sum().rename("org_count")
+        ent_agg = ent_agg.merge(person_counts, on="window_id", how="left").merge(org_counts, on="window_id", how="left")
+        ent_agg[["person_count", "org_count"]] = ent_agg[["person_count", "org_count"]].fillna(0)
         features = features.merge(ent_agg, on="window_id", how="left")
     else:
         features["entity_count"] = 0
