@@ -149,7 +149,7 @@ def main():
     ).toPandas()
 
     hourly_pd = hourly.select(
-        "subreddit", "hour_bucket", "post_count", "unique_authors", "avg_score",
+        "subreddit", "hour_bucket", "post_count", "unique_authors", "mean_score",
     ).toPandas()
     hourly_pd["hour_bucket"] = pd.to_datetime(hourly_pd["hour_bucket"])
     hourly_pd = hourly_pd.sort_values(["subreddit", "hour_bucket"])
@@ -192,7 +192,7 @@ def main():
             & (hourly_pd["hour_bucket"] <= we + pd.Timedelta(hours=POST_HOURS))
         )
         post_ts = hourly_pd.loc[post_mask]
-        post_spike_avg_score = float(post_ts["avg_score"].mean()) if not post_ts.empty else 0.0
+        post_spike_avg_score = float(post_ts["mean_score"].mean()) if not post_ts.empty else 0.0
         post_spike_unique_authors = float(post_ts["unique_authors"].mean()) if not post_ts.empty else 0.0
 
         # Pre-spike baseline
@@ -202,7 +202,7 @@ def main():
             & (hourly_pd["hour_bucket"] < ws)
         )
         pre_ts = hourly_pd.loc[pre_mask]
-        baseline_avg_score = float(pre_ts["avg_score"].mean()) if not pre_ts.empty else 0.0
+        baseline_avg_score = float(pre_ts["mean_score"].mean()) if not pre_ts.empty else 0.0
 
         profiles.append({
             "window_id": aw_row["window_id"],
