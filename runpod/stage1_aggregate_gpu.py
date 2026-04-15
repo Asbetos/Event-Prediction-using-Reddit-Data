@@ -27,27 +27,23 @@ import s3fs
 from tqdm import tqdm
 
 # ── GPU imports with fallback ───────────────────────────────────────────────
-try:
-    import cudf
-    import dask_cudf
-    GPU_AVAILABLE = True
-    DF_LIB = cudf
-    print("cuDF available - using GPU acceleration")
-except ImportError:
-    GPU_AVAILABLE = False
-    DF_LIB = pd
-    print("WARNING: cuDF not available - falling back to pandas (will be slow)")
+# Force pandas due to CUDA driver version mismatch on Lightning.ai
+GPU_AVAILABLE = False
+DF_LIB = pd
+print("Using pandas (GPU disabled due to driver version mismatch)")
 
 # ── Logging setup ───────────────────────────────────────────────────────────
-os.makedirs("/workspace/logs", exist_ok=True)
+import os
+LOG_DIR = os.path.expanduser("~/logs")
+os.makedirs(LOG_DIR, exist_ok=True)
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
-    handlers=[
-        logging.StreamHandler(sys.stdout),
-        logging.FileHandler("/workspace/logs/stage1_aggregate.log"),
-    ],
+handlers=[
+    logging.StreamHandler(sys.stdout),
+    logging.FileHandler(os.path.join(LOG_DIR, "stage1_aggregate.log")),
+],
 )
 logger = logging.getLogger(__name__)
 
