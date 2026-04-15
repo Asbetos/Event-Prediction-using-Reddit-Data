@@ -1,11 +1,13 @@
 """Spark session factory tuned for EC2 t3.large (2 vCPU, 7.6 GB RAM)."""
 
 import os
+import tempfile
 from pyspark.sql import SparkSession
 
 os.environ.setdefault("JAVA_HOME", "/usr/lib/jvm/java-17-openjdk-amd64")
 
 PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+SPARK_TMP_DIR = os.environ.get("SPARK_TMP_DIR", tempfile.gettempdir())
 
 
 def create_spark_session(app_name: str = "RedditEWS",
@@ -43,7 +45,7 @@ def create_spark_session(app_name: str = "RedditEWS",
         # Memory fractions — lower JVM fraction leaves more for Python/pandas
         .config("spark.memory.fraction", "0.4")
         .config("spark.memory.storageFraction", "0.2")
-        .config("spark.local.dir", os.path.join(PROJECT_DIR, "data", "spark-tmp"))
+        .config("spark.local.dir", os.path.join(SPARK_TMP_DIR, "spark-tmp"))
 
         # S3A access
         .config("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem")

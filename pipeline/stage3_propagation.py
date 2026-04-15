@@ -27,6 +27,7 @@ from utils.spark_utils import read_intermediate, write_intermediate
 from utils.viz_utils import save_fig
 
 import matplotlib
+import networkx as nx
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
@@ -73,12 +74,12 @@ def main():
 
     # Ensure total_posts is available
     if "total_posts" not in sub_stats.columns:
-        sub_stats = sub_stats.withColumnRenamed(
-            [c for c in sub_stats.columns if "post" in c.lower()][0],
-            "total_posts",
+    post_cols = [c for c in sub_stats.columns if "post" in c.lower()]
+    if post_cols:
+        sub_stats = sub_stats.withColumnRenamed(post_cols[0], "total_posts")
         )
 
-    sub_stats = sub_stats.select("subreddit", "total_posts")
+    sub_stats = sub_stats.select("subreddit", "total_posts"
 
     # ----- 2. Self-join: find co-occurring anomalies ---------------------
     aw = anomaly_windows.select(
@@ -127,7 +128,6 @@ def main():
         return
 
     # ----- 3. Build graph & connected components -------------------------
-    import networkx as nx
 
     G = nx.Graph()
     for _, row in co_occur_pd.iterrows():
@@ -288,7 +288,6 @@ def main():
 
     # --- 3. Network graph of top 10 clusters -----------------------------
     try:
-        import networkx as nx
 
         fig, axes = plt.subplots(2, 5, figsize=(24, 10))
         axes = axes.flatten()

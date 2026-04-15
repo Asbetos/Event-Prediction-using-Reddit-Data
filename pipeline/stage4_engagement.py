@@ -57,8 +57,12 @@ def classify_spike_shape(ts_values):
     str : one of "sharp_spike", "sustained_plateau", "double_peak", "slow_burn"
     """
     arr = np.array(ts_values, dtype=float)
-    if len(arr) == 0 or np.all(np.isnan(arr)) or np.nanmax(arr) == 0:
+    if len(arr) == 0:
         return "sharp_spike"
+    if np.all(np.isnan(arr)):
+        return "sharp_spike"
+    if np.nanmax(arr) == 0:
+        return "sustained_plateau"  # All zeros = flat plateau
 
     # Normalize to 0-1
     vmin, vmax = np.nanmin(arr), np.nanmax(arr)

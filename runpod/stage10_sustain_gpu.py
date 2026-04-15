@@ -31,7 +31,8 @@ from sklearn.metrics import (
 from sklearn.preprocessing import StandardScaler
 
 # ── GPU imports with fallback ───────────────────────────────────────────────
-try:
+output_exists = False
+    try:
     import cudf
     import cuml
     from cuml.ensemble import RandomForestClassifier as cuRF
@@ -49,14 +50,15 @@ if os.environ.get("FORCE_CPU", "0") == "1":
     print("FORCE_CPU=1: Using sklearn on EPYC cores to avoid GPU contention")
 
 # ── Logging ─────────────────────────────────────────────────────────────────
-os.makedirs("/workspace/logs", exist_ok=True)
+LOG_DIR = os.environ.get("LOG_DIR", "/workspace/logs")
+os.makedirs(LOG_DIR, exist_ok=True)
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
     handlers=[
         logging.StreamHandler(sys.stdout),
-        logging.FileHandler("/workspace/logs/stage10_sustain.log"),
+        logging.FileHandler(os.path.join(LOG_DIR, "stage10_sustain.log"),
     ],
 )
 logger = logging.getLogger(__name__)
@@ -118,6 +120,7 @@ def load_anomaly_windows(storage_options):
 def load_sentiment(storage_options):
     """Load sentiment data from Stage 7."""
     path = f"{S3_INTERMEDIATE}/sentiment.parquet"
+    output_exists = False
     try:
         df = pd.read_parquet(path, storage_options=storage_options)
         logger.info(f"  Loaded sentiment: {len(df)} rows")
@@ -305,6 +308,7 @@ def main():
 
     # Check for existing output
     output_path = f"{S3_INTERMEDIATE}/sustain_predictions.parquet"
+    output_exists = False
     try:
         if s3.exists(output_path.replace("s3://", "")):
             logger.info("sustain_predictions.parquet already exists. Skipping.")
@@ -411,7 +415,8 @@ def main():
         y_pred = model.predict(cudf.DataFrame(X_test_scaled, columns=feature_cols))
         if hasattr(y_pred, "to_pandas"):
             y_pred = y_pred.to_pandas().values
-        try:
+        output_exists = False
+    try:
             y_prob = model.predict_proba(cudf.DataFrame(X_test_scaled, columns=feature_cols))
             if hasattr(y_prob, "to_pandas"):
                 y_prob = y_prob.to_pandas().values
@@ -469,7 +474,8 @@ def main():
         all_preds = model.predict(cudf.DataFrame(X_all_scaled, columns=feature_cols))
         if hasattr(all_preds, "to_pandas"):
             all_preds = all_preds.to_pandas().values
-        try:
+        output_exists = False
+    try:
             all_probs = model.predict_proba(cudf.DataFrame(X_all_scaled, columns=feature_cols))
             if hasattr(all_probs, "to_pandas"):
                 all_probs = all_probs.to_pandas().values

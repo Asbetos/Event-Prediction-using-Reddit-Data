@@ -25,7 +25,8 @@ import s3fs
 from tqdm import tqdm
 
 # ── GPU imports with fallback ───────────────────────────────────────────────
-try:
+output_exists = False
+    try:
     import cudf
     GPU_AVAILABLE = True
     print("cuDF available")
@@ -33,7 +34,8 @@ except ImportError:
     GPU_AVAILABLE = False
     print("cuDF not available - using pandas")
 
-try:
+output_exists = False
+    try:
     import cuml
     CUML_AVAILABLE = True
     print("cuML available - GPU UMAP + HDBSCAN")
@@ -42,14 +44,15 @@ except ImportError:
     print("cuML not available - using CPU UMAP + HDBSCAN")
 
 # ── Logging ─────────────────────────────────────────────────────────────────
-os.makedirs("/workspace/logs", exist_ok=True)
+LOG_DIR = os.environ.get("LOG_DIR", "/workspace/logs")
+os.makedirs(LOG_DIR, exist_ok=True)
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
     handlers=[
         logging.StreamHandler(sys.stdout),
-        logging.FileHandler("/workspace/logs/stage8_topics.log"),
+        logging.FileHandler(os.path.join(LOG_DIR, "stage8_topics.log"),
     ],
 )
 logger = logging.getLogger(__name__)
@@ -118,7 +121,8 @@ def fetch_texts_for_window(subreddit, start_ts, end_ts, storage_options,
     for year, month in months_needed:
         for data_type, text_col in [("comments", "body"), ("submissions", "selftext"),
                                      ("submissions", "title")]:
-            try:
+            output_exists = False
+    try:
                 cols = ["subreddit", "created_utc"]
                 if text_col not in cols:
                     cols.append(text_col)
@@ -235,6 +239,7 @@ def main():
 
     # Check for existing output
     output_path = f"{S3_INTERMEDIATE}/topics.parquet"
+    output_exists = False
     try:
         if s3.exists(output_path.replace("s3://", "")):
             logger.info("topics.parquet already exists on S3. Skipping.")
@@ -357,7 +362,8 @@ def main():
         # Get topic words
         topic_words = ""
         if dominant != -1:
-            try:
+            output_exists = False
+    try:
                 words_scores = topic_model.get_topic(dominant)
                 topic_words = ", ".join([w for w, _ in words_scores[:10]])
             except Exception:
@@ -383,7 +389,8 @@ def main():
     for topic_id in topic_info["Topic"]:
         if topic_id == -1:
             continue
-        try:
+        output_exists = False
+    try:
             words_scores = topic_model.get_topic(topic_id)
             detail = {
                 "topic_id": topic_id,

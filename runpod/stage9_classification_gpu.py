@@ -33,7 +33,8 @@ from sklearn.metrics import (
 )
 
 # ── GPU imports with fallback ───────────────────────────────────────────────
-try:
+output_exists = False
+    try:
     import cudf
     import cuml
     from cuml.ensemble import RandomForestClassifier as cuRF
@@ -44,7 +45,8 @@ except ImportError:
     from sklearn.ensemble import RandomForestClassifier
     print("cuML not available - using sklearn RandomForest")
 
-try:
+output_exists = False
+    try:
     import xgboost as xgb
     XGB_AVAILABLE = True
     print("XGBoost available")
@@ -53,14 +55,15 @@ except ImportError:
     print("XGBoost not available")
 
 # ── Logging ─────────────────────────────────────────────────────────────────
-os.makedirs("/workspace/logs", exist_ok=True)
+LOG_DIR = os.environ.get("LOG_DIR", "/workspace/logs")
+os.makedirs(LOG_DIR, exist_ok=True)
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
     handlers=[
         logging.StreamHandler(sys.stdout),
-        logging.FileHandler("/workspace/logs/stage9_classification.log"),
+        logging.FileHandler(os.path.join(LOG_DIR, "stage9_classification.log"),
     ],
 )
 logger = logging.getLogger(__name__)
@@ -129,7 +132,8 @@ def load_intermediate_data(storage_options):
 
     for name, filename in files.items():
         path = f"{S3_INTERMEDIATE}/{filename}"
-        try:
+        output_exists = False
+    try:
             df = pd.read_parquet(path, storage_options=storage_options)
             if name == "anomaly_windows" and "window_start" in df.columns:
                 df = df.rename(columns={"window_start": "start_time", "window_end": "end_time"})
@@ -381,6 +385,7 @@ def main():
     # Check for existing output
     output_path = f"{S3_INTERMEDIATE}/classifications.parquet"
     importance_path = f"{S3_INTERMEDIATE}/feature_importance.parquet"
+    output_exists = False
     try:
         if s3.exists(output_path.replace("s3://", "")):
             logger.info("classifications.parquet already exists on S3. Skipping.")

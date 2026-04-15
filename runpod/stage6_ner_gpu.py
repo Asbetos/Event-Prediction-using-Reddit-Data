@@ -31,7 +31,8 @@ import s3fs
 from tqdm import tqdm
 
 # ── GPU imports with fallback ───────────────────────────────────────────────
-try:
+output_exists = False
+    try:
     import cudf
     GPU_AVAILABLE = True
     print("cuDF available - using GPU for data loading")
@@ -40,14 +41,15 @@ except ImportError:
     print("cuDF not available - using pandas")
 
 # ── Logging ─────────────────────────────────────────────────────────────────
-os.makedirs("/workspace/logs", exist_ok=True)
+LOG_DIR = os.environ.get("LOG_DIR", "/workspace/logs")
+os.makedirs(LOG_DIR, exist_ok=True)
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
     handlers=[
         logging.StreamHandler(sys.stdout),
-        logging.FileHandler("/workspace/logs/stage6_ner.log"),
+        logging.FileHandler(os.path.join(LOG_DIR, "stage6_ner.log"),
     ],
 )
 logger = logging.getLogger(__name__)
@@ -89,6 +91,7 @@ def load_spacy_model():
     import spacy
 
     # Try to activate GPU
+    output_exists = False
     try:
         spacy.prefer_gpu()
         logger.info("spaCy GPU activated")
@@ -125,7 +128,8 @@ def read_month_text(year, month, storage_options, subreddits):
         path = f"{S3_BASE}/{data_type}/yyyy={year}/mm={month:02d}/"
         text_col = "body" if data_type == "comments" else "selftext"
 
-        try:
+        output_exists = False
+    try:
             cols = ["subreddit", "created_utc", text_col]
             df = pd.read_parquet(
                 path,
@@ -147,6 +151,7 @@ def read_month_text(year, month, storage_options, subreddits):
             logger.warning(f"Could not read {data_type} {year}-{month:02d}: {e}")
 
     # Also grab submission titles
+    output_exists = False
     try:
         path = f"{S3_BASE}/submissions/yyyy={year}/mm={month:02d}/"
         df = pd.read_parquet(
@@ -224,6 +229,7 @@ def main():
     # Check for existing output
     output_path = f"{S3_INTERMEDIATE}/entities.parquet"
     cooc_path = f"{S3_INTERMEDIATE}/entity_cooccurrence.parquet"
+    output_exists = False
     try:
         if s3.exists(output_path.replace("s3://", "")):
             logger.info("entities.parquet already exists on S3. Skipping.")
@@ -293,7 +299,8 @@ def main():
                 texts = [texts[i] for i in indices]
 
             # Run NER
-            try:
+            output_exists = False
+    try:
                 entity_counts, cooccurrence = extract_entities_batch(nlp, texts)
             except Exception as e:
                 logger.error(f"NER error on window {window_id}: {e}")

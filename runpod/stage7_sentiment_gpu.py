@@ -26,7 +26,8 @@ from tqdm import tqdm
 from scipy import stats as scipy_stats
 
 # ── GPU imports with fallback ───────────────────────────────────────────────
-try:
+output_exists = False
+    try:
     import cudf
     GPU_AVAILABLE = True
     print("cuDF available - using GPU for data loading")
@@ -35,14 +36,15 @@ except ImportError:
     print("cuDF not available - using pandas")
 
 # ── Logging ─────────────────────────────────────────────────────────────────
-os.makedirs("/workspace/logs", exist_ok=True)
+LOG_DIR = os.environ.get("LOG_DIR", "/workspace/logs")
+os.makedirs(LOG_DIR, exist_ok=True)
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
     handlers=[
         logging.StreamHandler(sys.stdout),
-        logging.FileHandler("/workspace/logs/stage7_sentiment.log"),
+        logging.FileHandler(os.path.join(LOG_DIR, "stage7_sentiment.log"),
     ],
 )
 logger = logging.getLogger(__name__)
@@ -54,7 +56,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config.settings import S3_BUCKET, S3_BASE, S3_INTERMEDIATE
 
 MODEL_NAME = "cardiffnlp/twitter-roberta-base-sentiment-latest"
-INFERENCE_BATCH_SIZE = 256
+INFERENCE_BATCH_SIZE = int(os.environ.get("SENTIMENT_BATCH_SIZE", "128"))
 MAX_TEXT_LENGTH = 512  # RoBERTa max tokens
 BASELINE_SAMPLE_SIZE = 5000
 ANOMALY_SAMPLE_SIZE = 10000
@@ -133,7 +135,8 @@ def fetch_texts_for_window(subreddit, start_ts, end_ts, storage_options,
     texts = []
     for year, month in months_needed:
         for data_type, text_col in [("comments", "body"), ("submissions", "selftext")]:
-            try:
+            output_exists = False
+    try:
                 path = f"{S3_BASE}/{data_type}/yyyy={year}/mm={month:02d}/"
                 df = pd.read_parquet(
                     path,
@@ -154,7 +157,8 @@ def fetch_texts_for_window(subreddit, start_ts, end_ts, storage_options,
                 logger.debug(f"Could not read {data_type} {year}-{month:02d}: {e}")
 
         # Also submission titles
-        try:
+        output_exists = False
+    try:
             path = f"{S3_BASE}/submissions/yyyy={year}/mm={month:02d}/"
             df = pd.read_parquet(
                 path,
@@ -218,7 +222,8 @@ def run_sentiment_batch(sentiment_pipe, texts, batch_size=INFERENCE_BATCH_SIZE):
     # Process in batches
     for i in range(0, len(truncated), batch_size):
         batch = truncated[i:i + batch_size]
-        try:
+        output_exists = False
+    try:
             results = sentiment_pipe(batch, batch_size=batch_size)
 
             for result in results:
@@ -321,6 +326,7 @@ def main():
 
     # Check for existing output
     output_path = f"{S3_INTERMEDIATE}/sentiment.parquet"
+    output_exists = False
     try:
         if s3.exists(output_path.replace("s3://", "")):
             logger.info("sentiment.parquet already exists on S3. Skipping.")
@@ -348,7 +354,8 @@ def main():
         logger.info(f"Window {window_id}: r/{subreddit} "
                     f"({start_ts} to {end_ts})")
 
-        try:
+        output_exists = False
+    try:
             # ── Anomaly-window sentiment ────────────────────────────────────
             anomaly_texts = fetch_texts_for_window(
                 subreddit, start_ts, end_ts, storage_options,

@@ -33,7 +33,8 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import StratifiedKFold
 
 # ── GPU imports with fallback ───────────────────────────────────────────────
-try:
+output_exists = False
+    try:
     import cudf
     import cuml
     from cuml.ensemble import RandomForestClassifier as cuRF
@@ -50,21 +51,23 @@ if os.environ.get("FORCE_CPU", "0") == "1":
     from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
     print("FORCE_CPU=1: Using sklearn on EPYC cores to avoid GPU contention")
 
-try:
+output_exists = False
+    try:
     import xgboost as xgb
     XGB_AVAILABLE = True
 except ImportError:
     XGB_AVAILABLE = False
 
 # ── Logging ─────────────────────────────────────────────────────────────────
-os.makedirs("/workspace/logs", exist_ok=True)
+LOG_DIR = os.environ.get("LOG_DIR", "/workspace/logs")
+os.makedirs(LOG_DIR, exist_ok=True)
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
     handlers=[
         logging.StreamHandler(sys.stdout),
-        logging.FileHandler("/workspace/logs/stage11_forecast.log"),
+        logging.FileHandler(os.path.join(LOG_DIR, "stage11_forecast.log"),
     ],
 )
 logger = logging.getLogger(__name__)
@@ -127,6 +130,7 @@ def load_hourly_counts(storage_options):
 def load_sentiment(storage_options):
     """Load sentiment data from Stage 7 if available."""
     path = f"{S3_INTERMEDIATE}/sentiment.parquet"
+    output_exists = False
     try:
         df = pd.read_parquet(path, storage_options=storage_options)
         return df
@@ -358,6 +362,7 @@ def main():
 
     # Check for existing output
     output_path = f"{S3_INTERMEDIATE}/forecast_results.parquet"
+    output_exists = False
     try:
         if s3.exists(output_path.replace("s3://", "")):
             logger.info("forecast_results.parquet already exists. Skipping.")
@@ -459,7 +464,8 @@ def main():
             preds = model.predict(cudf.DataFrame(X_test_s, columns=feature_cols))
             if hasattr(preds, "to_pandas"):
                 preds = preds.to_pandas().values
-            try:
+            output_exists = False
+    try:
                 probs = model.predict_proba(cudf.DataFrame(X_test_s, columns=feature_cols))
                 if hasattr(probs, "to_pandas"):
                     probs = probs.to_pandas().values

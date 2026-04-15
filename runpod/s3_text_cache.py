@@ -2,7 +2,7 @@
 """
 Shared S3 text cache for RunPod GPU stages (6, 7, 8).
 
-Downloads each month's parquet text data ONCE to /workspace/s3_cache/ and
+Downloads each month's parquet text data ONCE to /home/zeus/s3_cache/ and
 serves all NLP stages from local disk — eliminating redundant S3 reads.
 
 Without this cache, stages 6/7/8 each download the same month data separately,
@@ -34,7 +34,7 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config.settings import S3_BUCKET, S3_BASE, S3_INTERMEDIATE, MONTHS
 
-CACHE_DIR = "/workspace/s3_cache"
+CACHE_DIR = "/home/zeus/s3_cache"
 
 
 def get_s3_storage_options():
