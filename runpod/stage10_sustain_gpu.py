@@ -62,12 +62,13 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # ── Constants ───────────────────────────────────────────────────────────────
-S3_BUCKET = "ven-bda-s3-v2"
-S3_INTERMEDIATE = f"s3://{S3_BUCKET}/reddit-data/intermediate"
+import sys
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from config.settings import S3_BUCKET, S3_INTERMEDIATE
 
 SUSTAIN_THRESHOLD_MULTIPLIER = 2.0  # >2x baseline
-SUSTAIN_DURATION_HOURS = 24         # for >24 hours
-EARLY_WINDOW_HOURS = 4              # features from first N hours
+SUSTAIN_DURATION_HOURS = 24  # for >24 hours
+EARLY_WINDOW_HOURS = 4  # features from first N hours
 
 
 def get_s3_storage_options():

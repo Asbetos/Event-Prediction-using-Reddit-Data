@@ -48,9 +48,10 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # ── Constants ───────────────────────────────────────────────────────────────
-S3_BUCKET = "ven-bda-s3-v2"
-S3_BASE = f"s3://{S3_BUCKET}/reddit-data/parquet"
-S3_INTERMEDIATE = f"s3://{S3_BUCKET}/reddit-data/intermediate"
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from config.settings import S3_BUCKET, S3_BASE, S3_INTERMEDIATE
 
 MODEL_NAME = "cardiffnlp/twitter-roberta-base-sentiment-latest"
 INFERENCE_BATCH_SIZE = 256

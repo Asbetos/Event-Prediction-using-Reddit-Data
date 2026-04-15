@@ -53,12 +53,12 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # ── Constants ───────────────────────────────────────────────────────────────
-S3_BUCKET = "ven-bda-s3-v2"
-S3_BASE = f"s3://{S3_BUCKET}/reddit-data/parquet"
-S3_INTERMEDIATE = f"s3://{S3_BUCKET}/reddit-data/intermediate"
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from config.settings import S3_BUCKET, S3_BASE, S3_INTERMEDIATE, MONTHS
 NER_BATCH_SIZE = 4_000  # Reduced for shared GPU (other processes on this pod use ~47GB)
 ENTITY_TYPES = {"PERSON", "ORG", "GPE"}
-MONTHS = [(2023, m) for m in range(6, 13)] + [(2024, m) for m in range(1, 8)]
 
 
 def get_s3_storage_options():

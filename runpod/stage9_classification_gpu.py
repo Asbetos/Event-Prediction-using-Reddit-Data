@@ -66,13 +66,12 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # ── Constants ───────────────────────────────────────────────────────────────
-S3_BUCKET = "ven-bda-s3-v2"
-S3_INTERMEDIATE = f"s3://{S3_BUCKET}/reddit-data/intermediate"
+import sys
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from config.settings import S3_BUCKET, S3_INTERMEDIATE, EVENT_CATEGORIES
 
 PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 GROUND_TRUTH_PATH = os.path.join(PROJECT_DIR, "data", "ground_truth", "events.csv")
-
-EVENT_CATEGORIES = ["breaking_news", "controversy", "product_launch", "disaster", "meme_viral"]
 
 FEATURE_COLUMNS = [
     "peak_z_score", "duration_hours", "sentiment_shift", "entity_count",
