@@ -16,20 +16,22 @@ tail -f /tmp/s3_copy.log
 aws s3 ls s3://reddit-event-prediction-1776283460/reddit-data/parquet/ --recursive | wc -l
 ```
 
-### 2. Lightning.ai Setup
+### 2. RunPod Setup
 - **Instance**: A100 80GB (or A100 40GB if 80GB unavailable)
 - **Region**: us-east-1 (same as S3 bucket for lower latency)
 - **OS**: Ubuntu 22.04 or 24.04
 - **Storage**: 100GB+ for caching intermediate data locally
+- **Base Image**: PyTorch/CUDA image with working `torch` and `nvcc`
+- **Python**: Prefer 3.10 or 3.11 for smoother RAPIDS installs
 
 ---
 
-## Phase 1: Lightning.ai Environment Setup (15-30 min)
+## Phase 1: RunPod Environment Setup (15-30 min)
 
-### Step 1.1: Create Lightning.ai Instance
-1. Go to https://lightning.ai
-2. Create new studio with A100 GPU
-3. Select PyTorch/CUDA base image
+### Step 1.1: Create RunPod Instance
+1. Create a new RunPod pod with an A100 GPU
+2. Select a PyTorch/CUDA base image
+3. Ensure `python3 -c "import torch; print(torch.cuda.is_available())"` returns `True`
 
 ### Step 1.2: Clone Repository
 ```bash
@@ -43,17 +45,19 @@ cd Event-Prediction-using-Reddit-Data
 export AWS_ACCESS_KEY_ID="<your-access-key-id>"
 export AWS_SECRET_ACCESS_KEY="<your-secret-access-key>"
 export AWS_SESSION_TOKEN="<your-session-token>"  # if using temporary credentials
+export RAW_S3_BUCKET="reddit-event-prediction-1776283460"
+export PROCESSED_S3_BUCKET="reddit-event-prediction-147390571732-processed-20260423"
 ```
 
 ### Step 1.4: Run Setup Script
 ```bash
-chmod +x setup_lightning.sh
-./setup_lightning.sh
+chmod +x runpod/setup_runpod.sh
+./runpod/setup_runpod.sh
 ```
 
 ---
 
-## Phase 2: GPU Stages (Run on Lightning.ai)
+## Phase 2: GPU Stages (Run on RunPod)
 
 ### Stage 1: Data Aggregation (45-90 min)
 **Reads 478 GB raw Reddit data and produces aggregated counts.**
@@ -74,7 +78,7 @@ python runpod/stage1_aggregate_gpu.py
 
 ## Phase 3: EC2 Spark Stages (Requires EC2 instance)
 
-> **Note:** Stages 2-5 require PySpark on EC2 (t3.large). These cannot run on Lightning.ai without Spark.
+> **Note:** Stages 2-5 require PySpark on EC2 (t3.large). These are not intended to run on RunPod.
 
 ### Option A: Use EC2 Instance
 1. Launch EC2 t3.large in us-east-1
@@ -93,7 +97,7 @@ pip install pyspark==3.5.5
 **Stage 2: Anomaly Detection (5-10 min)**
 ```bash
 # Download Stage 1 outputs first
-aws s3 sync s3://reddit-event-prediction-1776283460/reddit-data/intermediate/ \
+aws s3 sync s3://reddit-event-prediction-147390571732-processed-20260423/reddit-data/intermediate/ \
     data/intermediate/ \
     --exclude "*" \
     --include "hourly_counts.parquet/*" \
@@ -121,18 +125,18 @@ python -m pipeline.stage5_temporal
 **After Stage 2-5, upload to S3:**
 ```bash
 aws s3 cp data/intermediate/anomaly_windows.parquet \
-    s3://reddit-event-prediction-1776283460/reddit-data/intermediate/ --recursive
+    s3://reddit-event-prediction-147390571732-processed-20260423/reddit-data/intermediate/ --recursive
 aws s3 cp data/intermediate/propagation_events.parquet \
-    s3://reddit-event-prediction-1776283460/reddit-data/intermediate/ --recursive
+    s3://reddit-event-prediction-147390571732-processed-20260423/reddit-data/intermediate/ --recursive
 aws s3 cp data/intermediate/spike_profiles.parquet \
-    s3://reddit-event-prediction-1776283460/reddit-data/intermediate/ --recursive
+    s3://reddit-event-prediction-147390571732-processed-20260423/reddit-data/intermediate/ --recursive
 aws s3 cp data/intermediate/temporal_patterns.parquet \
-    s3://reddit-event-prediction-1776283460/reddit-data/intermediate/ --recursive
+    s3://reddit-event-prediction-147390571732-processed-20260423/reddit-data/intermediate/ --recursive
 ```
 
 ---
 
-## Phase 4: GPU NLP Stages (Run on Lightning.ai, 2-4 hours each)
+## Phase 4: GPU NLP Stages (Run on RunPod, 2-4 hours each)
 
 > **Requires:** `anomaly_windows.parquet` in S3 from Stage 2
 
@@ -151,11 +155,11 @@ python runpod/stage7_sentiment_gpu.py
 python runpod/stage8_topics_gpu.py
 ```
 
-> **These stages can run in parallel** on separate Lightning.ai instances if you have multiple.
+> **These stages can run in parallel** on separate RunPod pods if you have multiple.
 
 ---
 
-## Phase 5: Classification & Prediction (Run on Lightning.ai, 30-60 min)
+## Phase 5: Classification & Prediction (Run on RunPod, 30-60 min)
 
 > **Requires:** Outputs from Stages 6, 7, 8 in S3
 
@@ -181,11 +185,11 @@ python runpod/stage11_forecast_gpu.py
 | Phase | Stages | Platform | Time |
 |-------|--------|----------|------|
 | Data Copy | - | S3 | 4-6 hours |
-| Setup | - | Lightning.ai | 15-30 min |
-| Phase 1 | Stage 1 | Lightning.ai GPU | 45-90 min |
+| Setup | - | RunPod | 15-30 min |
+| Phase 1 | Stage 1 | RunPod GPU | 45-90 min |
 | Phase 2-3 | Stages 2-5 | EC2 Spark | 25-45 min |
-| Phase 4 | Stages 6-8 | Lightning.ai GPU | 2.5-6.5 hours |
-| Phase 5 | Stages 9-11 | Lightning.ai GPU | 30-60 min |
+| Phase 4 | Stages 6-8 | RunPod GPU | 2.5-6.5 hours |
+| Phase 5 | Stages 9-11 | RunPod GPU | 30-60 min |
 
 **Total: ~8-14 hours** (including data copy)
 
@@ -202,7 +206,7 @@ tail -f /workspace/logs/stage6_ner.log
 
 ### Check S3 Outputs
 ```bash
-aws s3 ls s3://reddit-event-prediction-1776283460/reddit-data/intermediate/
+aws s3 ls s3://reddit-event-prediction-147390571732-processed-20260423/reddit-data/intermediate/
 ```
 
 ### GPU Memory Check
@@ -215,7 +219,7 @@ print(f"GPU Memory: {torch.cuda.memory_allocated()/1024**3:.1f} / {torch.cuda.ge
 
 ## Cost Estimates
 
-- **Lightning.ai A100 80GB**: ~$2-3/hour
+- **RunPod A100 80GB**: check current on-demand pod pricing
 - **EC2 t3.large**: ~$0.10/hour
 - **S3 Storage**: ~$0.023/GB/month (478 GB = ~$11/month)
 - **S3 Data Transfer**: Free within same region

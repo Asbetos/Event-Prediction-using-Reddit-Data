@@ -74,12 +74,11 @@ def main():
 
     # Ensure total_posts is available
     if "total_posts" not in sub_stats.columns:
-    post_cols = [c for c in sub_stats.columns if "post" in c.lower()]
-    if post_cols:
-        sub_stats = sub_stats.withColumnRenamed(post_cols[0], "total_posts")
-        )
+        post_cols = [c for c in sub_stats.columns if "post" in c.lower()]
+        if post_cols:
+            sub_stats = sub_stats.withColumnRenamed(post_cols[0], "total_posts")
 
-    sub_stats = sub_stats.select("subreddit", "total_posts"
+    sub_stats = sub_stats.select("subreddit", "total_posts")
 
     # ----- 2. Self-join: find co-occurring anomalies ---------------------
     aw = anomaly_windows.select(

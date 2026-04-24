@@ -11,6 +11,23 @@ echo "  RunPod A100 GPU Pod Setup - Reddit Event Prediction"
 echo "============================================================"
 echo "Start time: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
 
+# ── 0. Base image validation ────────────────────────────────────────────────
+echo ""
+echo "[0/6] Validating RunPod base image..."
+python3 -c "import torch; print(f'  PyTorch {torch.__version__} | CUDA available: {torch.cuda.is_available()}')" || {
+    echo "  ERROR: PyTorch is not installed in this image."
+    echo "  Use a RunPod PyTorch/CUDA template image, then rerun setup."
+    exit 1
+}
+
+if command -v nvcc >/dev/null 2>&1; then
+    echo "  nvcc detected."
+else
+    echo "  nvcc not found; will detect CUDA version from PyTorch runtime."
+fi
+
+echo "  Base image looks usable."
+
 # ── 1. System packages ──────────────────────────────────────────────────────
 echo ""
 echo "[1/6] Installing system packages..."
@@ -23,7 +40,17 @@ echo "  System packages installed."
 echo ""
 echo "[2/6] Installing RAPIDS cuDF + dask-cudf..."
 PYTHON_VERSION=$(python3 -c "import sys; print(f'{sys.version_info.major}{sys.version_info.minor}')")
-CUDA_VERSION=$(nvcc --version 2>/dev/null | grep "release" | sed 's/.*release //' | sed 's/,.*//' | tr -d '.')
+if command -v nvcc >/dev/null 2>&1; then
+    CUDA_VERSION=$(nvcc --version 2>/dev/null | grep "release" | sed 's/.*release //' | sed 's/,.*//' | tr -d ' ')
+else
+    CUDA_VERSION=$(python3 -c "import torch; print((torch.version.cuda or '').strip())")
+fi
+
+if [ -z "$CUDA_VERSION" ]; then
+    echo "  ERROR: Could not determine CUDA version from nvcc or torch.version.cuda"
+    exit 1
+fi
+
 CUDA_MAJOR=$(echo "$CUDA_VERSION" | head -c2)
 echo "  Detected Python ${PYTHON_VERSION}, CUDA ${CUDA_VERSION}"
 

@@ -5,11 +5,19 @@ import os
 PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # ── S3 paths ──────────────────────────────────────────────────────────────
-S3_BUCKET = "reddit-event-prediction-1776283460"
-S3_BASE = f"s3://{S3_BUCKET}/reddit-data/parquet"
+RAW_S3_BUCKET = os.environ.get("RAW_S3_BUCKET", "reddit-event-prediction-1776283460")
+PROCESSED_S3_BUCKET = os.environ.get("PROCESSED_S3_BUCKET", RAW_S3_BUCKET)
+
+# Backward-compatible alias used by existing stage imports.
+S3_BUCKET = PROCESSED_S3_BUCKET
+
+S3_BASE = os.environ.get("S3_BASE", f"s3://{RAW_S3_BUCKET}/reddit-data/parquet")
 S3_COMMENTS = f"{S3_BASE}/comments"
 S3_SUBMISSIONS = f"{S3_BASE}/submissions"
-S3_INTERMEDIATE = f"s3://{S3_BUCKET}/reddit-data/intermediate"
+S3_INTERMEDIATE = os.environ.get(
+    "S3_INTERMEDIATE",
+    f"s3://{PROCESSED_S3_BUCKET}/reddit-data/intermediate",
+)
 
 # S3A versions (for PySpark)
 S3A_COMMENTS = S3_COMMENTS.replace("s3://", "s3a://")

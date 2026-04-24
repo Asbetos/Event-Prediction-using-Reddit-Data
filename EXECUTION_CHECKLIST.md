@@ -23,14 +23,16 @@ aws sts get-caller-identity
 
 ---
 
-## Lightning.ai Setup
+## RunPod Setup
 
 ### Step 1: Create Instance
-- [ ] Login to https://lightning.ai
-- [ ] Create new Studio
+- [ ] Login to RunPod
+- [ ] Create a new pod
 - [ ] Select A100 80GB GPU
 - [ ] Region: us-east-1
 - [ ] Storage: 100GB+
+- [ ] Use a PyTorch/CUDA base image where `import torch` works and `torch.cuda.is_available()` is `True`
+- [ ] Prefer Python 3.10 or 3.11 on the image for smoother RAPIDS compatibility
 
 ### Step 2: Environment Setup
 - [ ] Clone repository
@@ -42,20 +44,23 @@ cd Event-Prediction-using-Reddit-Data
 
 - [ ] Set AWS credentials
 ```bash
-export AWS_ACCESS_KEY_ID="ASIASEUJJUTKGSUPS7X7"
-export AWS_SECRET_ACCESS_KEY="l9KdUMVEfKQST09gLlv40Y0pUwVDi4ADL4p/OKnm"
-export AWS_SESSION_TOKEN="IQoJb3JpZ2luX2VjEOP..."
+export AWS_ACCESS_KEY_ID="<your-access-key-id>"
+export AWS_SECRET_ACCESS_KEY="<your-secret-access-key>"
+export AWS_SESSION_TOKEN="<your-session-token>"  # if using temporary credentials
+export RAW_S3_BUCKET="reddit-event-prediction-1776283460"
+export PROCESSED_S3_BUCKET="reddit-event-prediction-147390571732-processed-20260423"
 ```
 
 - [ ] Run setup script
 ```bash
-chmod +x setup_lightning.sh
-./setup_lightning.sh
+chmod +x runpod/setup_runpod.sh
+./runpod/setup_runpod.sh
 ```
 
 - [ ] Verify GPU access
 ```python
 python3 -c "import torch; print(f'CUDA available: {torch.cuda.is_available()}, GPU: {torch.cuda.get_device_name(0)}')"
+python3 -c "import torch; print(f'PyTorch version: {torch.__version__}')"
 ```
 
 ---
@@ -70,7 +75,7 @@ python runpod/stage1_aggregate_gpu.py
 ```
 - [ ] Verify outputs in S3
 ```bash
-aws s3 ls s3://reddit-event-prediction-1776283460/reddit-data/intermediate/
+aws s3 ls s3://reddit-event-prediction-147390571732-processed-20260423/reddit-data/intermediate/
 # Should show: hourly_counts.parquet/, daily_counts.parquet/, subreddit_stats.parquet/
 ```
 
@@ -91,7 +96,7 @@ pip3 install --user pyspark pandas pyarrow boto3 s3fs
 ```bash
 git clone https://github.com/Asbetos/Event-Prediction-using-Reddit-Data.git
 cd Event-Prediction-using-Reddit-Data
-aws s3 sync s3://reddit-event-prediction-1776283460/reddit-data/intermediate/ \
+aws s3 sync s3://reddit-event-prediction-147390571732-processed-20260423/reddit-data/intermediate/ \
     data/intermediate/ \
     --exclude "*" \
     --include "hourly_counts.parquet/*" \
@@ -144,13 +149,13 @@ ls -la data/intermediate/temporal_patterns.parquet/
 - [ ] Sync outputs
 ```bash
 aws s3 cp data/intermediate/anomaly_windows.parquet \
-    s3://reddit-event-prediction-1776283460/reddit-data/intermediate/ --recursive
+    s3://reddit-event-prediction-147390571732-processed-20260423/reddit-data/intermediate/ --recursive
 aws s3 cp data/intermediate/propagation_events.parquet \
-    s3://reddit-event-prediction-1776283460/reddit-data/intermediate/ --recursive
+    s3://reddit-event-prediction-147390571732-processed-20260423/reddit-data/intermediate/ --recursive
 aws s3 cp data/intermediate/spike_profiles.parquet \
-    s3://reddit-event-prediction-1776283460/reddit-data/intermediate/ --recursive
+    s3://reddit-event-prediction-147390571732-processed-20260423/reddit-data/intermediate/ --recursive
 aws s3 cp data/intermediate/temporal_patterns.parquet \
-    s3://reddit-event-prediction-1776283460/reddit-data/intermediate/ --recursive
+    s3://reddit-event-prediction-147390571732-processed-20260423/reddit-data/intermediate/ --recursive
 ```
 
 ---
@@ -168,7 +173,7 @@ tail -f /workspace/logs/stage6_ner.log
 ```
 - [ ] Verify output in S3
 ```bash
-aws s3 ls s3://reddit-event-prediction-1776283460/reddit-data/intermediate/entities.parquet/
+aws s3 ls s3://reddit-event-prediction-147390571732-processed-20260423/reddit-data/intermediate/entities.parquet/
 ```
 
 #### Stage 7: Sentiment (2-4 hours)
@@ -182,7 +187,7 @@ tail -f /workspace/logs/stage7_sentiment.log
 ```
 - [ ] Verify output in S3
 ```bash
-aws s3 ls s3://reddit-event-prediction-1776283460/reddit-data/intermediate/sentiment.parquet/
+aws s3 ls s3://reddit-event-prediction-147390571732-processed-20260423/reddit-data/intermediate/sentiment.parquet/
 ```
 
 #### Stage 8: Topics (30-90 min)
@@ -196,7 +201,7 @@ tail -f /workspace/logs/stage8_topics.log
 ```
 - [ ] Verify output in S3
 ```bash
-aws s3 ls s3://reddit-event-prediction-1776283460/reddit-data/intermediate/topics.parquet/
+aws s3 ls s3://reddit-event-prediction-147390571732-processed-20260423/reddit-data/intermediate/topics.parquet/
 ```
 
 ---
@@ -210,7 +215,7 @@ python runpod/stage9_classification_gpu.py
 ```
 - [ ] Verify output
 ```bash
-aws s3 ls s3://reddit-event-prediction-1776283460/reddit-data/intermediate/classifications.parquet/
+aws s3 ls s3://reddit-event-prediction-147390571732-processed-20260423/reddit-data/intermediate/classifications.parquet/
 ```
 
 #### Stage 10: Sustain Prediction (10-20 min)
@@ -220,7 +225,7 @@ python runpod/stage10_sustain_gpu.py
 ```
 - [ ] Verify output
 ```bash
-aws s3 ls s3://reddit-event-prediction-1776283460/reddit-data/intermediate/sustain_predictions.parquet/
+aws s3 ls s3://reddit-event-prediction-147390571732-processed-20260423/reddit-data/intermediate/sustain_predictions.parquet/
 ```
 
 #### Stage 11: Forecasting (10-20 min)
@@ -230,7 +235,7 @@ python runpod/stage11_forecast_gpu.py
 ```
 - [ ] Verify output
 ```bash
-aws s3 ls s3://reddit-event-prediction-1776283460/reddit-data/intermediate/forecast_results.parquet/
+aws s3 ls s3://reddit-event-prediction-147390571732-processed-20260423/reddit-data/intermediate/forecast_results.parquet/
 ```
 
 ---
@@ -239,7 +244,7 @@ aws s3 ls s3://reddit-event-prediction-1776283460/reddit-data/intermediate/forec
 
 ### Check All Outputs
 ```bash
-aws s3 ls s3://reddit-event-prediction-1776283460/reddit-data/intermediate/
+aws s3 ls s3://reddit-event-prediction-147390571732-processed-20260423/reddit-data/intermediate/
 ```
 
 Expected files:
@@ -281,7 +286,7 @@ export AWS_SESSION_TOKEN="..."
 ### Stage 1 Checkpoint Resume
 ```bash
 # If Stage 1 fails, check which months are complete
-aws s3 ls s3://reddit-event-prediction-1776283460/reddit-data/intermediate/stage1_checkpoint/
+aws s3 ls s3://reddit-event-prediction-147390571732-processed-20260423/reddit-data/intermediate/stage1_checkpoint/
 
 # Re-run to resume
 python runpod/stage1_aggregate_gpu.py

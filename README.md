@@ -13,7 +13,9 @@ The pipeline runs across two compute environments:
 | **EC2** (t3.large) | 2 vCPU, 8 GB RAM, PySpark | Stages 2--5, Spark ML |
 | **RunPod** (A100 80GB) | GPU, RAPIDS/cuML | Stages 1, 6--11 |
 
-Intermediate data is exchanged via **S3** (`s3://ven-bda-s3-v2/reddit-data/intermediate/`).
+Raw input is read from `s3://reddit-event-prediction-1776283460/reddit-data/parquet/`.
+
+Processed intermediate data can be written to a separate S3 bucket, for example `s3://reddit-event-prediction-147390571732-processed-20260423/reddit-data/intermediate/`.
 
 ## Project Structure
 
@@ -50,10 +52,11 @@ Intermediate data is exchanged via **S3** (`s3://ven-bda-s3-v2/reddit-data/inter
 
 ## Prerequisites
 
-- **AWS credentials** configured with access to the `ven-bda-s3-v2` S3 bucket
+- **AWS credentials** configured with read access to the raw input bucket `reddit-event-prediction-1776283460`
+- **AWS credentials** configured with write access to the processed output bucket `reddit-event-prediction-147390571732-processed-20260423`
 - **EC2 instance** (t3.large or larger) running Ubuntu with Java 17
-- **RunPod pod** with an A100 80GB GPU and CUDA drivers
-- Raw Reddit dataset already uploaded to `s3://ven-bda-s3-v2/reddit-data/parquet/`
+- **RunPod pod** with an A100 80GB GPU, CUDA drivers, and a PyTorch/CUDA base image
+- Raw Reddit dataset already uploaded to `s3://reddit-event-prediction-1776283460/reddit-data/parquet/`
 
 ## Step-by-Step Execution Guide
 
@@ -71,11 +74,20 @@ Installs PySpark, Python packages, Quarto, and system fonts.
 
 **On RunPod:**
 ```bash
+export RAW_S3_BUCKET="reddit-event-prediction-1776283460"
+export PROCESSED_S3_BUCKET="reddit-event-prediction-147390571732-processed-20260423"
+
 chmod +x runpod/setup_runpod.sh
-./setup_runpod.sh
+./runpod/setup_runpod.sh
 ```
 Installs RAPIDS (cuDF/cuML), transformers, spaCy with GPU, BERTopic, and configures AWS credentials.
 > Estimated time: ~10--15 minutes
+
+RunPod image guidance:
+- Use a `PyTorch/CUDA` template image, not a plain Python image.
+- The repo does not pin a specific PyTorch version; it expects `torch` to already be installed and CUDA-enabled in the base image.
+- Verify with `python3 -c "import torch; print(torch.__version__, torch.cuda.is_available())"`.
+- Safest choice: Python `3.10` or `3.11`, since RAPIDS compatibility is usually smoother than `3.12`.
 
 ---
 
@@ -84,6 +96,9 @@ Installs RAPIDS (cuDF/cuML), transformers, spaCy with GPU, BERTopic, and configu
 **Stage 1** -- Aggregate raw Reddit data into hourly/daily counts.
 
 ```bash
+export RAW_S3_BUCKET="reddit-event-prediction-1776283460"
+export PROCESSED_S3_BUCKET="reddit-event-prediction-147390571732-processed-20260423"
+
 python runpod/stage1_aggregate_gpu.py
 ```
 
@@ -96,7 +111,7 @@ Reads 478 GB of raw comments and submissions from S3 month-by-month using cuDF o
 After completion, download outputs to EC2:
 ```bash
 # On EC2
-aws s3 sync s3://ven-bda-s3-v2/reddit-data/intermediate/ data/intermediate/ \
+aws s3 sync s3://reddit-event-prediction-147390571732-processed-20260423/reddit-data/intermediate/ data/intermediate/ \
   --exclude "*" \
   --include "hourly_counts.parquet/*" \
   --include "daily_counts.parquet/*" \
@@ -122,7 +137,7 @@ Computes 7-day rolling statistics per subreddit, flags hours with z > 3.0, and m
 After completion, upload to S3 for GPU stages:
 ```bash
 aws s3 cp data/intermediate/anomaly_windows.parquet \
-  s3://ven-bda-s3-v2/reddit-data/intermediate/anomaly_windows.parquet --recursive
+  s3://reddit-event-prediction-147390571732-processed-20260423/reddit-data/intermediate/anomaly_windows.parquet --recursive
 ```
 
 ---

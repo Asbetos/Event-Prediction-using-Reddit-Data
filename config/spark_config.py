@@ -36,6 +36,11 @@ def create_spark_session(app_name: str = "RedditEWS",
         .config("spark.sql.adaptive.coalescePartitions.enabled", "true")
         .config("spark.sql.adaptive.coalescePartitions.minPartitionNum", "1")
 
+        # Give local Spark longer to survive large driver-side pandas conversions.
+        .config("spark.network.timeout", "600s")
+        .config("spark.executor.heartbeatInterval", "60s")
+        .config("spark.rpc.askTimeout", "600s")
+
         # Serialization
         .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
 

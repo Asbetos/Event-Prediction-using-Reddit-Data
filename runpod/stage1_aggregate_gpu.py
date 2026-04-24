@@ -8,7 +8,7 @@ Produces small intermediate tables:
   - daily_counts.parquet    (subreddit x day: same metrics)
   - subreddit_stats.parquet (per-subreddit summary stats)
 
-Outputs written to s3://ven-bda-s3-v2/reddit-data/intermediate/
+Outputs written to the configured S3 intermediate path.
 
 Usage: python stage1_aggregate_gpu.py
 """
@@ -27,14 +27,25 @@ import s3fs
 from tqdm import tqdm
 
 # ── GPU imports with fallback ───────────────────────────────────────────────
-# Force pandas due to CUDA driver version mismatch on Lightning.ai
-GPU_AVAILABLE = False
-DF_LIB = pd
-print("Using pandas (GPU disabled due to driver version mismatch)")
+FORCE_CPU = os.environ.get("FORCE_CPU", "").lower() in {"1", "true", "yes"}
+if FORCE_CPU:
+    GPU_AVAILABLE = False
+    print("FORCE_CPU set - using pandas")
+else:
+    try:
+        import cudf
+        GPU_AVAILABLE = True
+        print("cuDF available - using GPU for data loading and aggregation")
+    except ImportError:
+        GPU_AVAILABLE = False
+        print("cuDF not available - using pandas")
 
 # ── Logging setup ───────────────────────────────────────────────────────────
 import os
-LOG_DIR = os.path.expanduser("~/logs")
+LOG_DIR = os.environ.get(
+    "LOG_DIR",
+    "/workspace/logs" if os.path.isdir("/workspace") else os.path.expanduser("~/logs"),
+)
 os.makedirs(LOG_DIR, exist_ok=True)
 logging.basicConfig(
     level=logging.INFO,
