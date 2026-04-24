@@ -31,8 +31,7 @@ import s3fs
 from tqdm import tqdm
 
 # ── GPU imports with fallback ───────────────────────────────────────────────
-output_exists = False
-    try:
+try:
     import cudf
     GPU_AVAILABLE = True
     print("cuDF available - using GPU for data loading")
@@ -41,7 +40,10 @@ except ImportError:
     print("cuDF not available - using pandas")
 
 # ── Logging ─────────────────────────────────────────────────────────────────
-LOG_DIR = os.environ.get("LOG_DIR", "/workspace/logs")
+LOG_DIR = os.environ.get(
+    "LOG_DIR",
+    "/content/logs" if os.path.isdir("/content") else "/workspace/logs",
+)
 os.makedirs(LOG_DIR, exist_ok=True)
 logging.basicConfig(
     level=logging.INFO,
@@ -49,7 +51,7 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
     handlers=[
         logging.StreamHandler(sys.stdout),
-        logging.FileHandler(os.path.join(LOG_DIR, "stage6_ner.log"),
+        logging.FileHandler(os.path.join(LOG_DIR, "stage6_ner.log")),
     ],
 )
 logger = logging.getLogger(__name__)
@@ -128,8 +130,7 @@ def read_month_text(year, month, storage_options, subreddits):
         path = f"{S3_BASE}/{data_type}/yyyy={year}/mm={month:02d}/"
         text_col = "body" if data_type == "comments" else "selftext"
 
-        output_exists = False
-    try:
+        try:
             cols = ["subreddit", "created_utc", text_col]
             df = pd.read_parquet(
                 path,
@@ -299,8 +300,7 @@ def main():
                 texts = [texts[i] for i in indices]
 
             # Run NER
-            output_exists = False
-    try:
+            try:
                 entity_counts, cooccurrence = extract_entities_batch(nlp, texts)
             except Exception as e:
                 logger.error(f"NER error on window {window_id}: {e}")

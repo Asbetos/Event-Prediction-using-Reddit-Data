@@ -25,8 +25,7 @@ import s3fs
 from tqdm import tqdm
 
 # ── GPU imports with fallback ───────────────────────────────────────────────
-output_exists = False
-    try:
+try:
     import cudf
     GPU_AVAILABLE = True
     print("cuDF available")
@@ -34,8 +33,7 @@ except ImportError:
     GPU_AVAILABLE = False
     print("cuDF not available - using pandas")
 
-output_exists = False
-    try:
+try:
     import cuml
     CUML_AVAILABLE = True
     print("cuML available - GPU UMAP + HDBSCAN")
@@ -44,7 +42,10 @@ except ImportError:
     print("cuML not available - using CPU UMAP + HDBSCAN")
 
 # ── Logging ─────────────────────────────────────────────────────────────────
-LOG_DIR = os.environ.get("LOG_DIR", "/workspace/logs")
+LOG_DIR = os.environ.get(
+    "LOG_DIR",
+    "/content/logs" if os.path.isdir("/content") else "/workspace/logs",
+)
 os.makedirs(LOG_DIR, exist_ok=True)
 logging.basicConfig(
     level=logging.INFO,
@@ -52,7 +53,7 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
     handlers=[
         logging.StreamHandler(sys.stdout),
-        logging.FileHandler(os.path.join(LOG_DIR, "stage8_topics.log"),
+        logging.FileHandler(os.path.join(LOG_DIR, "stage8_topics.log")),
     ],
 )
 logger = logging.getLogger(__name__)
@@ -121,8 +122,7 @@ def fetch_texts_for_window(subreddit, start_ts, end_ts, storage_options,
     for year, month in months_needed:
         for data_type, text_col in [("comments", "body"), ("submissions", "selftext"),
                                      ("submissions", "title")]:
-            output_exists = False
-    try:
+            try:
                 cols = ["subreddit", "created_utc"]
                 if text_col not in cols:
                     cols.append(text_col)
@@ -362,8 +362,7 @@ def main():
         # Get topic words
         topic_words = ""
         if dominant != -1:
-            output_exists = False
-    try:
+            try:
                 words_scores = topic_model.get_topic(dominant)
                 topic_words = ", ".join([w for w, _ in words_scores[:10]])
             except Exception:
@@ -389,8 +388,7 @@ def main():
     for topic_id in topic_info["Topic"]:
         if topic_id == -1:
             continue
-        output_exists = False
-    try:
+        try:
             words_scores = topic_model.get_topic(topic_id)
             detail = {
                 "topic_id": topic_id,

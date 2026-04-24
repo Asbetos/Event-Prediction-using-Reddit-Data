@@ -33,8 +33,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import StratifiedKFold
 
 # ── GPU imports with fallback ───────────────────────────────────────────────
-output_exists = False
-    try:
+try:
     import cudf
     import cuml
     from cuml.ensemble import RandomForestClassifier as cuRF
@@ -51,15 +50,17 @@ if os.environ.get("FORCE_CPU", "0") == "1":
     from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
     print("FORCE_CPU=1: Using sklearn on EPYC cores to avoid GPU contention")
 
-output_exists = False
-    try:
+try:
     import xgboost as xgb
     XGB_AVAILABLE = True
 except ImportError:
     XGB_AVAILABLE = False
 
 # ── Logging ─────────────────────────────────────────────────────────────────
-LOG_DIR = os.environ.get("LOG_DIR", "/workspace/logs")
+LOG_DIR = os.environ.get(
+    "LOG_DIR",
+    "/content/logs" if os.path.isdir("/content") else "/workspace/logs",
+)
 os.makedirs(LOG_DIR, exist_ok=True)
 logging.basicConfig(
     level=logging.INFO,
@@ -67,7 +68,7 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
     handlers=[
         logging.StreamHandler(sys.stdout),
-        logging.FileHandler(os.path.join(LOG_DIR, "stage11_forecast.log"),
+        logging.FileHandler(os.path.join(LOG_DIR, "stage11_forecast.log")),
     ],
 )
 logger = logging.getLogger(__name__)
@@ -464,8 +465,7 @@ def main():
             preds = model.predict(cudf.DataFrame(X_test_s, columns=feature_cols))
             if hasattr(preds, "to_pandas"):
                 preds = preds.to_pandas().values
-            output_exists = False
-    try:
+            try:
                 probs = model.predict_proba(cudf.DataFrame(X_test_s, columns=feature_cols))
                 if hasattr(probs, "to_pandas"):
                     probs = probs.to_pandas().values

@@ -31,8 +31,7 @@ from sklearn.metrics import (
 from sklearn.preprocessing import StandardScaler
 
 # ── GPU imports with fallback ───────────────────────────────────────────────
-output_exists = False
-    try:
+try:
     import cudf
     import cuml
     from cuml.ensemble import RandomForestClassifier as cuRF
@@ -50,7 +49,10 @@ if os.environ.get("FORCE_CPU", "0") == "1":
     print("FORCE_CPU=1: Using sklearn on EPYC cores to avoid GPU contention")
 
 # ── Logging ─────────────────────────────────────────────────────────────────
-LOG_DIR = os.environ.get("LOG_DIR", "/workspace/logs")
+LOG_DIR = os.environ.get(
+    "LOG_DIR",
+    "/content/logs" if os.path.isdir("/content") else "/workspace/logs",
+)
 os.makedirs(LOG_DIR, exist_ok=True)
 logging.basicConfig(
     level=logging.INFO,
@@ -58,7 +60,7 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
     handlers=[
         logging.StreamHandler(sys.stdout),
-        logging.FileHandler(os.path.join(LOG_DIR, "stage10_sustain.log"),
+        logging.FileHandler(os.path.join(LOG_DIR, "stage10_sustain.log")),
     ],
 )
 logger = logging.getLogger(__name__)
@@ -415,8 +417,7 @@ def main():
         y_pred = model.predict(cudf.DataFrame(X_test_scaled, columns=feature_cols))
         if hasattr(y_pred, "to_pandas"):
             y_pred = y_pred.to_pandas().values
-        output_exists = False
-    try:
+        try:
             y_prob = model.predict_proba(cudf.DataFrame(X_test_scaled, columns=feature_cols))
             if hasattr(y_prob, "to_pandas"):
                 y_prob = y_prob.to_pandas().values
@@ -474,8 +475,7 @@ def main():
         all_preds = model.predict(cudf.DataFrame(X_all_scaled, columns=feature_cols))
         if hasattr(all_preds, "to_pandas"):
             all_preds = all_preds.to_pandas().values
-        output_exists = False
-    try:
+        try:
             all_probs = model.predict_proba(cudf.DataFrame(X_all_scaled, columns=feature_cols))
             if hasattr(all_probs, "to_pandas"):
                 all_probs = all_probs.to_pandas().values

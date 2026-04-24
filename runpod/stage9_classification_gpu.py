@@ -33,8 +33,7 @@ from sklearn.metrics import (
 )
 
 # ── GPU imports with fallback ───────────────────────────────────────────────
-output_exists = False
-    try:
+try:
     import cudf
     import cuml
     from cuml.ensemble import RandomForestClassifier as cuRF
@@ -45,8 +44,7 @@ except ImportError:
     from sklearn.ensemble import RandomForestClassifier
     print("cuML not available - using sklearn RandomForest")
 
-output_exists = False
-    try:
+try:
     import xgboost as xgb
     XGB_AVAILABLE = True
     print("XGBoost available")
@@ -55,7 +53,10 @@ except ImportError:
     print("XGBoost not available")
 
 # ── Logging ─────────────────────────────────────────────────────────────────
-LOG_DIR = os.environ.get("LOG_DIR", "/workspace/logs")
+LOG_DIR = os.environ.get(
+    "LOG_DIR",
+    "/content/logs" if os.path.isdir("/content") else "/workspace/logs",
+)
 os.makedirs(LOG_DIR, exist_ok=True)
 logging.basicConfig(
     level=logging.INFO,
@@ -63,7 +64,7 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
     handlers=[
         logging.StreamHandler(sys.stdout),
-        logging.FileHandler(os.path.join(LOG_DIR, "stage9_classification.log"),
+        logging.FileHandler(os.path.join(LOG_DIR, "stage9_classification.log")),
     ],
 )
 logger = logging.getLogger(__name__)
@@ -132,8 +133,7 @@ def load_intermediate_data(storage_options):
 
     for name, filename in files.items():
         path = f"{S3_INTERMEDIATE}/{filename}"
-        output_exists = False
-    try:
+        try:
             df = pd.read_parquet(path, storage_options=storage_options)
             if name == "anomaly_windows" and "window_start" in df.columns:
                 df = df.rename(columns={"window_start": "start_time", "window_end": "end_time"})

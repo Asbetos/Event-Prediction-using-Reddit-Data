@@ -26,8 +26,7 @@ from tqdm import tqdm
 from scipy import stats as scipy_stats
 
 # ── GPU imports with fallback ───────────────────────────────────────────────
-output_exists = False
-    try:
+try:
     import cudf
     GPU_AVAILABLE = True
     print("cuDF available - using GPU for data loading")
@@ -36,7 +35,10 @@ except ImportError:
     print("cuDF not available - using pandas")
 
 # ── Logging ─────────────────────────────────────────────────────────────────
-LOG_DIR = os.environ.get("LOG_DIR", "/workspace/logs")
+LOG_DIR = os.environ.get(
+    "LOG_DIR",
+    "/content/logs" if os.path.isdir("/content") else "/workspace/logs",
+)
 os.makedirs(LOG_DIR, exist_ok=True)
 logging.basicConfig(
     level=logging.INFO,
@@ -44,7 +46,7 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
     handlers=[
         logging.StreamHandler(sys.stdout),
-        logging.FileHandler(os.path.join(LOG_DIR, "stage7_sentiment.log"),
+        logging.FileHandler(os.path.join(LOG_DIR, "stage7_sentiment.log")),
     ],
 )
 logger = logging.getLogger(__name__)
@@ -135,8 +137,7 @@ def fetch_texts_for_window(subreddit, start_ts, end_ts, storage_options,
     texts = []
     for year, month in months_needed:
         for data_type, text_col in [("comments", "body"), ("submissions", "selftext")]:
-            output_exists = False
-    try:
+            try:
                 path = f"{S3_BASE}/{data_type}/yyyy={year}/mm={month:02d}/"
                 df = pd.read_parquet(
                     path,
@@ -157,8 +158,7 @@ def fetch_texts_for_window(subreddit, start_ts, end_ts, storage_options,
                 logger.debug(f"Could not read {data_type} {year}-{month:02d}: {e}")
 
         # Also submission titles
-        output_exists = False
-    try:
+        try:
             path = f"{S3_BASE}/submissions/yyyy={year}/mm={month:02d}/"
             df = pd.read_parquet(
                 path,
@@ -222,8 +222,7 @@ def run_sentiment_batch(sentiment_pipe, texts, batch_size=INFERENCE_BATCH_SIZE):
     # Process in batches
     for i in range(0, len(truncated), batch_size):
         batch = truncated[i:i + batch_size]
-        output_exists = False
-    try:
+        try:
             results = sentiment_pipe(batch, batch_size=batch_size)
 
             for result in results:
@@ -354,8 +353,7 @@ def main():
         logger.info(f"Window {window_id}: r/{subreddit} "
                     f"({start_ts} to {end_ts})")
 
-        output_exists = False
-    try:
+        try:
             # ── Anomaly-window sentiment ────────────────────────────────────
             anomaly_texts = fetch_texts_for_window(
                 subreddit, start_ts, end_ts, storage_options,
