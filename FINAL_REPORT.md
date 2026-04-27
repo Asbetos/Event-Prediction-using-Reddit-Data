@@ -352,20 +352,7 @@ The forecasting success suggests the right framing for early warning is *binary*
 
 ---
 
-## 7. Team Contributions
-
-Commit history is on the `main` branch — `git log --pretty=format:"%h %an %s"` for the full record.
-
-| Author (git) | Commits | Primary contributions |
-|---|---|---|
-| `asbetos` (Kartik Pruthi) | 8 | Initial 11-stage scaffold; Stage 6 month-batched S3 reads (~99 % I/O reduction); Spark 3.5 timestamp-cast fixes; A100 batch-size tuning |
-| `Venkatesh Nagarjuna` | 3 | Project proposal; README; GPU pipeline robustness fixes |
-| `User` (Dhruv Rai) | 5 | Lightning.ai / Colab adaptation of Stage 1; raw / processed S3 bucket split; pipeline hardening; handoff document; figures |
-| `Ubuntu` (shared user) | 1 | Bucket config update + Lightning.ai setup script |
-
----
-
-## 8. Conclusion
+## 7. Conclusion
 
 We built an end-to-end pipeline that turns 1.27 billion Reddit posts (478 GB) into 31,938 labeled anomaly windows, characterizes their morphology, propagation, and temporal structure, extracts 63,614 named entities on a GPU pod, and trains a 48 h-precursor event forecaster that achieves AUC 0.955 / F1 0.77 on the 35-event ground truth. Several stages produced honest negative results — Stage 9 majority-class collapse, Stage 10 imbalance-driven zero positive precision, Stage 4 over-aggressive double-peak detection — and we are explicit about what each tells us. The hybrid EC2 / GPU architecture, parquet-based stage contract, and ground-truth catalog together form a reproducible big-data analytics pattern that fits inside an AWS-Academy budget; the entire repository runs offline against `data/intermediate/` for review and figure regeneration.
 

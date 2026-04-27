@@ -163,17 +163,6 @@ Full list: [`data/ground_truth/events.csv`](data/ground_truth/events.csv).
 - **XGBoost** 2.0+ · **scikit-learn** 1.3+ · **NetworkX** 3.1+
 - **Quarto** 1.4 · **matplotlib**, **plotly**, **wordcloud**
 
-## Provenance
-
-Commit history is preserved on the `main` branch (run `git log --pretty=format:"%h %an %s"`). Authors:
-
-| Author | Commits | Primary contributions |
-|---|---|---|
-| `asbetos` (Kartik Pruthi) | 8 | Initial 11-stage scaffold; Stage 6 month-batched S3 reads (~99 % I/O reduction); Spark 3.5 timestamp casting; A100 batch tuning |
-| `Venkatesh` | 3 | Project proposal; README; GPU robustness fixes |
-| `User` (Dhruv Rai) | 5 | Lightning.ai / Colab adaptation; raw/processed S3 bucket split; pipeline hardening; handoff document; figure additions |
-| `Ubuntu` | 1 | Bucket config + Lightning.ai setup |
-
 ## License & credits
 
 Course project for DATS 6450, Spring 2026. Reddit data via the [Pushshift](https://pushshift.io) archive. NLP models from spaCy and Hugging Face Hub.
