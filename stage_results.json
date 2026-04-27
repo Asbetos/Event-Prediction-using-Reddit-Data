@@ -1,0 +1,317 @@
+{
+  "stage1": {
+    "hourly_rows": 9381693,
+    "daily_rows": 406274,
+    "subreddit_stat_rows": 1000,
+    "unique_subreddits": 500,
+    "date_min": "2023-06-01 00:00:00",
+    "date_max": "2024-07-31 23:00:00",
+    "comments_total": 1187443795,
+    "submissions_total": 87224551
+  },
+  "stage2": {
+    "anomaly_windows": 31938,
+    "unique_subreddits_with_anomaly": 499,
+    "avg_duration_hours": 1.7490450247354248,
+    "median_duration_hours": 1.0,
+    "max_peak_z": 3540.3278153789406,
+    "median_peak_z": 3.673655127972814,
+    "p95_peak_z": 9.164710462501242,
+    "avg_peak_z": 4.9551719660126325,
+    "avg_anomaly_hours": 2.3757905942764106,
+    "top10_subreddits": {
+      "IndianTeenagers": 282,
+      "tennis": 207,
+      "biggboss": 204,
+      "LoveIslandTV": 203,
+      "Cricket": 203,
+      "FapDeciders": 198,
+      "SquaredCircle": 190,
+      "ConeHeads": 185,
+      "naturaltitties": 181,
+      "futebol": 175
+    }
+  },
+  "stage3": {
+    "n_clusters": 1,
+    "propagation_types": {
+      "niche_to_mainstream": 1
+    },
+    "max_subreddits_per_cluster": 63876,
+    "avg_duration_hours": 10246.0
+  },
+  "stage4": {
+    "spike_profile_rows": 31938,
+    "shape_distribution": {
+      "double_peak": 31673,
+      "slow_burn": 196,
+      "sharp_spike": 64,
+      "sustained_plateau": 5
+    },
+    "pearson_r_z_vs_engagement": -0.0025851700257619238,
+    "pearson_p": 0.6441707917621546,
+    "spearman_r_z_vs_engagement": 0.08169081331292267,
+    "spearman_p": 2.107226035218778e-48,
+    "avg_engagement_ratio": 1.385221796204755,
+    "median_engagement_ratio": 1.0
+  },
+  "stage5": {
+    "rows": 168,
+    "peak_dow": "Tue",
+    "peak_hour": 16,
+    "peak_anomaly_count": 520,
+    "weekday_anomalies": 24603,
+    "weekend_anomalies": 7335
+  },
+  "stage6": {
+    "entity_rows": 63614,
+    "windows_with_entities": 1738,
+    "subreddits_with_entities": 426,
+    "label_distribution": {
+      "PERSON": 35314,
+      "ORG": 20441,
+      "GPE": 7859
+    },
+    "unique_entities": 36082,
+    "top10_PERSON": {
+      "IUTR": 975,
+      "Scottie": 556,
+      "Ethan": 499,
+      "Sleigh": 407,
+      "Zekrom": 381,
+      "Trump": 348,
+      "Reshiram": 242,
+      "LF": 221,
+      "BTBF": 217,
+      "Sukuna": 201
+    },
+    "top10_ORG": {
+      "Hamas": 1050,
+      "WB": 731,
+      "YouTube": 439,
+      "Reddit": 403,
+      "reddit": 322,
+      "NFL": 313,
+      "Manchester United": 251,
+      "NBA": 250,
+      "ESPN": 226,
+      "IDF": 191
+    },
+    "top10_GPE": {
+      "Israel": 1330,
+      "US": 471,
+      "Gaza": 448,
+      "UK": 433,
+      "Palestine": 281,
+      "Canada": 242,
+      "India": 239,
+      "USA": 223,
+      "Texas": 218,
+      "Germany": 214
+    }
+  },
+  "stage7": {
+    "rows": 2,
+    "windows": 2,
+    "subreddits": 1,
+    "n_significant_shifts": 0,
+    "mean_sentiment_shift": 0.023101419843344663
+  },
+  "stage8": {
+    "windows_with_topic": 50,
+    "topic_id_dist": {
+      "-1": 48,
+      "0": 1,
+      "1": 1
+    },
+    "n_topics_overall": 2,
+    "topic_details": [
+      {
+        "topic_id": 0,
+        "count": 74,
+        "representative_words": "yeah, bye, baby, baby yeah, yeah yeah, bye baby, bye bye, image, yeah bye, ama"
+      },
+      {
+        "topic_id": 1,
+        "count": 71,
+        "representative_words": "rule, rule rule, rules, edit meee, signalis rules, meee, states, rules edit, edit, signalis"
+      }
+    ]
+  },
+  "stage9": {
+    "n_predictions": 500,
+    "category_distribution": {
+      "breaking_news": 500
+    }
+  },
+  "stage10": {
+    "n_predictions": 500,
+    "label_distribution": {
+      "decayed": 493,
+      "sustained": 7
+    },
+    "predicted_label_distribution": {
+      "decayed": 494,
+      "sustained": 6
+    },
+    "model_roc_auc": 0.9494949494949494,
+    "model_precision": 0.0,
+    "model_recall": 0.0,
+    "model_f1": 0.0,
+    "feature_importance": [
+      {
+        "feature": "velocity",
+        "importance": 0.1772094964981079
+      },
+      {
+        "feature": "early_mean_score",
+        "importance": 0.14476779103279114
+      },
+      {
+        "feature": "spike_ratio",
+        "importance": 0.12969331443309784
+      },
+      {
+        "feature": "author_diversity",
+        "importance": 0.1243530809879303
+      },
+      {
+        "feature": "score_acceleration",
+        "importance": 0.10557245463132858
+      },
+      {
+        "feature": "hour_of_day",
+        "importance": 0.08759211748838425
+      },
+      {
+        "feature": "peak_post_count",
+        "importance": 0.0838194191455841
+      },
+      {
+        "feature": "baseline_activity",
+        "importance": 0.0806373655796051
+      },
+      {
+        "feature": "cross_subreddit_count",
+        "importance": 0.03621511161327362
+      },
+      {
+        "feature": "is_weekend",
+        "importance": 0.030139977112412453
+      },
+      {
+        "feature": "sentiment_intensity",
+        "importance": 0.0
+      }
+    ]
+  },
+  "stage11": {
+    "n_predictions": 138,
+    "n_positive": 33,
+    "n_negative": 105,
+    "model_roc_auc": 0.954978354978355,
+    "model_avg_precision": 0.9093278016464589,
+    "model_precision": 0.8518518518518519,
+    "model_recall": 0.696969696969697,
+    "model_f1": 0.7666666666666667,
+    "fold_metrics": [
+      {
+        "fold": 0,
+        "auc": 0.9795918367346939,
+        "precision": 0.8333333333333334,
+        "recall": 0.7142857142857143,
+        "f1": 0.7692307692307693
+      },
+      {
+        "fold": 1,
+        "auc": 0.9863945578231292,
+        "precision": 0.8333333333333334,
+        "recall": 0.7142857142857143,
+        "f1": 0.7692307692307693
+      },
+      {
+        "fold": 2,
+        "auc": 0.9523809523809523,
+        "precision": 1.0,
+        "recall": 0.5714285714285714,
+        "f1": 0.7272727272727273
+      },
+      {
+        "fold": 3,
+        "auc": 0.9365079365079365,
+        "precision": 0.8,
+        "recall": 0.6666666666666666,
+        "f1": 0.7272727272727273
+      },
+      {
+        "fold": 4,
+        "auc": 0.9523809523809523,
+        "precision": 0.8333333333333334,
+        "recall": 0.8333333333333334,
+        "f1": 0.8333333333333334
+      }
+    ],
+    "feature_importance": [
+      {
+        "feature": "n_hours_data",
+        "importance": 0.2553079128265381
+      },
+      {
+        "feature": "author_concentration",
+        "importance": 0.0995788648724556
+      },
+      {
+        "feature": "mean_score",
+        "importance": 0.08248671889305115
+      },
+      {
+        "feature": "volume_ratio",
+        "importance": 0.07854868471622467
+      },
+      {
+        "feature": "mean_activity",
+        "importance": 0.0761684998869896
+      },
+      {
+        "feature": "peak_activity",
+        "importance": 0.05410756543278694
+      },
+      {
+        "feature": "max_z_score",
+        "importance": 0.050881676375865936
+      },
+      {
+        "feature": "score_trend",
+        "importance": 0.05056199058890343
+      },
+      {
+        "feature": "author_growth",
+        "importance": 0.04597979411482811
+      },
+      {
+        "feature": "std_activity",
+        "importance": 0.045408520847558975
+      },
+      {
+        "feature": "mean_authors",
+        "importance": 0.04326038062572479
+      },
+      {
+        "feature": "activity_trend",
+        "importance": 0.036611828953027725
+      },
+      {
+        "feature": "cross_posting_rate",
+        "importance": 0.03165554255247116
+      },
+      {
+        "feature": "activity_acceleration",
+        "importance": 0.02824445441365242
+      },
+      {
+        "feature": "mean_z_score",
+        "importance": 0.02119750715792179
+      }
+    ]
+  }
+}

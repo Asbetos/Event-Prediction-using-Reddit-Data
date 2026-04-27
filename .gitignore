@@ -23,10 +23,12 @@ env/
 .DS_Store
 Thumbs.db
 
-# Data & intermediate outputs (large files, stored in S3)
-data/intermediate/
+# Spark scratch + ad-hoc outputs
 data/spark-tmp/
 outputs/
+
+# Note: data/intermediate/ ships with this repo (~84 MB) so reviewers can run the
+# offline analysis. Re-running the cloud pipeline overwrites the same files.
 
 # Quarto build artifacts
 website/_site/
@@ -38,5 +40,7 @@ website/.quarto/
 # Jupyter
 .ipynb_checkpoints/
 
-# Logs
+# Logs (runtime PIDs, stage logs)
+logs/
 *.log
+*.pid
