@@ -369,9 +369,9 @@ def figure_event_story_collage() -> None:
 
 
 def figure_pipeline_diagram() -> None:
-    fig, ax = plt.subplots(figsize=(13.5, 6.6))
-    ax.set_xlim(0, 16)
-    ax.set_ylim(0, 10)
+    fig, ax = plt.subplots(figsize=(13.5, 5.4))
+    ax.set_xlim(0, 15.5)
+    ax.set_ylim(0, 6.6)
     ax.axis("off")
 
     def box(x: float, y: float, w: float, h: float, text: str, face: str, text_size: int = 12) -> None:
@@ -399,32 +399,29 @@ def figure_pipeline_diagram() -> None:
         )
         ax.add_patch(patch)
 
-    ax.text(0.4, 9.45, "Project architecture", fontsize=20, fontweight="bold", color=PALETTE["ink"])
-    ax.text(0.4, 8.95, "Two machines, 11 stages, one staged-data contract", fontsize=11, color=PALETTE["slate"])
+    box(0.5, 2.45, 2.2, 1.45, "Raw Reddit\n478 GB parquet", "#EEF4FB", 14)
+    box(3.2, 2.45, 2.1, 1.45, "Stage 1\nGPU aggregation", "#DDEBFB", 13)
 
-    box(0.5, 5.4, 2.6, 1.7, "Raw Reddit\n478 GB parquet", "#EEF4FB", 14)
-    box(3.7, 5.4, 2.5, 1.7, "Stage 1\nGPU aggregation", "#DDEBFB", 13)
+    box(5.9, 4.1, 2.4, 1.25, "Stages 2-5\nSpark EDA", "#FFF0D4", 13)
+    box(5.9, 1.55, 2.4, 1.25, "Stages 6-8\nGPU NLP", "#DDF3EF", 13)
 
-    box(6.9, 6.8, 2.6, 1.45, "Stages 2-5\nSpark EDA", "#FFF0D4", 13)
-    box(6.9, 4.55, 2.6, 1.45, "Stages 6-8\nGPU NLP", "#DDF3EF", 13)
+    box(8.9, 4.1, 2.55, 1.25, "Stages 9-10\nclassification + sustain", "#F4E6F8", 12)
+    box(8.9, 1.55, 2.55, 1.25, "Stage 11\n48h forecasting", "#E7F0FB", 13)
+    box(8.9, 0.1, 2.55, 1.0, "Ground truth\n35 events", "#F9E2DE", 12)
 
-    box(10.3, 6.8, 2.7, 1.45, "Stages 9-10\nclassification + sustain", "#F4E6F8", 12)
-    box(10.3, 4.55, 2.7, 1.45, "Stage 11\n48h forecasting", "#E7F0FB", 13)
-    box(10.3, 2.3, 2.7, 1.45, "Ground truth\n35 curated events", "#F9E2DE", 13)
+    box(12.1, 2.45, 1.9, 1.45, "Figures\n+ deck", "#EEF4FB", 14)
 
-    box(13.7, 5.4, 1.9, 1.7, "Figures\n+ deck", "#EEF4FB", 14)
+    arrow(2.7, 3.15, 3.2, 3.15)
+    arrow(5.3, 3.15, 5.9, 4.7)
+    arrow(5.3, 3.15, 5.9, 2.15)
+    arrow(8.3, 4.7, 8.9, 4.7)
+    arrow(8.3, 2.15, 8.9, 2.15)
+    arrow(10.175, 1.1, 10.175, 1.55)
+    arrow(11.45, 4.7, 12.1, 3.15)
+    arrow(11.45, 2.15, 12.1, 3.0)
 
-    arrow(3.1, 6.25, 3.7, 6.25)
-    arrow(6.2, 6.25, 6.9, 7.5)
-    arrow(6.2, 6.25, 6.9, 5.25)
-    arrow(9.5, 7.5, 10.3, 7.5)
-    arrow(9.5, 5.25, 10.3, 5.25)
-    arrow(11.65, 3.75, 11.65, 4.55)
-    arrow(13.0, 7.5, 13.7, 6.25)
-    arrow(13.0, 5.25, 13.7, 6.0)
-
-    box(5.9, 8.7, 3.1, 0.7, "EC2 t3.large · PySpark", "#F9FBFD", 11)
-    box(5.9, 3.55, 3.1, 0.7, "RunPod A100 · RAPIDS + transformers", "#F9FBFD", 11)
+    box(5.6, 5.8, 2.9, 0.55, "EC2 t3.large · PySpark", "#F9FBFD", 11)
+    box(5.45, 0.45, 3.2, 0.55, "RunPod A100 · RAPIDS + transformers", "#F9FBFD", 11)
 
     save(fig, "pipeline_diagram.png")
 

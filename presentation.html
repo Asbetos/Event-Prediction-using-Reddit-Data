@@ -10,9 +10,9 @@
   <meta name="generator" content="quarto-1.9.37">
 
   <meta name="author" content="Venkatesh Nagarjuna">
-  <meta name="author" content="Kartik Pruthi">
   <meta name="author" content="Dhruv Rai">
-  <meta name="dcterms.date" content="2026-04-01">
+  <meta name="author" content="Kartik Pruthi">
+  <meta name="dcterms.date" content="2026-04-28">
   <title>Reddit as an Early Warning System</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -135,7 +135,7 @@
 
 <section id="title-slide" class="quarto-title-block center">
   <h1 class="title">Reddit as an Early Warning System</h1>
-  <p class="subtitle">A 12-minute presentation built from the staged outputs in <code>data/intermediate/</code></p>
+  <p class="subtitle">DATS 6450 · Applied Big Data Analytics · Group 3 Final Project Presentation</p>
 
 <div class="quarto-title-authors">
 <div class="quarto-title-author">
@@ -145,24 +145,24 @@ Venkatesh Nagarjuna
 </div>
 <div class="quarto-title-author">
 <div class="quarto-title-author-name">
-Kartik Pruthi 
+Dhruv Rai 
 </div>
 </div>
 <div class="quarto-title-author">
 <div class="quarto-title-author-name">
-Dhruv Rai 
+Kartik Pruthi 
 </div>
 </div>
 </div>
 
-  <p class="date">2026-04-01</p>
+  <p class="date">2026-04-28</p>
 </section>
-<section id="reddit-as-an-early-warning-system" class="slide level2">
-<h2>Reddit as an Early Warning System</h2>
+<section id="executive-summary" class="slide level2">
+<h2>Executive Summary</h2>
 <div class="columns">
 <div class="column" style="width:43%;">
 <div class="kicker">
-DATS 6450 · Group 3
+DATS 6450 · Group 3 Presentation
 </div>
 <div class="accent-line">
 
@@ -171,15 +171,26 @@ DATS 6450 · Group 3
 <p>Can Reddit act as a practical early-warning radar for real-world events?</p>
 </div>
 <div class="hero-claim">
-<p><strong>Main story:</strong> at our current label volume, Reddit works better as a <strong>binary early-warning system</strong> than as a full event taxonomy engine.</p>
+<p><strong>Main story:</strong> At our current label volume, Reddit works better as a <strong>binary early-warning system</strong> than as a full event taxonomy engine.</p>
 </div>
+</div><div class="column" style="width:57%;">
+<div class="figure-frame">
+<img src="presentation_assets/figures/pipeline_scale_funnel.png" alt="Pipeline scale funnel">
+</div>
+</div></div>
+<p><br></p>
+<div class="columns">
+<div class="column" style="width:50%;">
 <div class="metric-grid">
 <div class="metric-card">
 <span class="value">1.27B</span><span class="label">comments + submissions processed</span>
 </div>
 <div class="metric-card">
-<span class="value">478 GB</span><span class="label">raw Pushshift Reddit data</span>
+<span class="value">478 GB</span><span class="label">raw Reddit data</span>
 </div>
+</div>
+</div><div class="column" style="width:50%;">
+<div class="metric-grid">
 <div class="metric-card">
 <span class="value">11</span><span class="label">pipeline stages</span>
 </div>
@@ -187,14 +198,11 @@ DATS 6450 · Group 3
 <span class="value">0.955</span><span class="label">best result: forecast AUC</span>
 </div>
 </div>
-<div class="small-note">
-<p>Every number and figure in this deck was regenerated from the local staged outputs under <code>data/intermediate/</code>.</p>
-</div>
-</div><div class="column" style="width:57%;">
-<div class="figure-frame">
-<img src="presentation_assets/figures/pipeline_scale_funnel.png" alt="Pipeline scale funnel">
-</div>
 </div></div>
+<p><br></p>
+<div class="small-note">
+<p>Every number and figure in this deck was generated from the staged outputs under <code>data/intermediate/</code>.</p>
+</div>
 <aside class="notes">
 <p>Target: 35 seconds.</p>
 <p>Open with the thesis, not the tooling. We asked whether Reddit can behave like an early-warning sensor. The strongest answer is yes for binary forecasting, not yet for precise event labeling.</p>
@@ -212,38 +220,18 @@ DATS 6450 · Group 3
 </section>
 <section id="why-this-matters" class="slide level2">
 <h2>Why This Matters</h2>
-<div class="kicker">
-Business Intelligence Framing
+<p>Business Intelligence context</p>
+<div class="bullets">
+<ul>
+<li><p><strong>Journalism and media desks:</strong> Flag emerging stories before they peak on mainstream outlets, especially in niche communities that move first.</p></li>
+<li><p><strong>PR and reputation monitoring:</strong> Track whether concentrated author activity is building around a company, policy, or public figure.</p></li>
+<li><p><strong>Trust and safety triage:</strong> Spot coordinated attention spikes that may need moderation, escalation, or human review.</p></li>
+<li><p><strong>Product launch monitoring:</strong> Measure whether launch-related chatter is building ahead of official announcements or broad press coverage.</p></li>
+</ul>
 </div>
-<div class="accent-line">
-
-</div>
-<div class="use-case-grid">
-<div class="use-case-card">
-<pre><code>&lt;h3&gt;Journalism and media desks&lt;/h3&gt;
-&lt;p&gt;Flag emerging stories before they peak on mainstream outlets, especially in niche communities that move first.&lt;/p&gt;</code></pre>
-</div>
-<div class="use-case-card">
-<pre><code>&lt;h3&gt;Trust and safety triage&lt;/h3&gt;
-&lt;p&gt;Spot coordinated attention spikes that may need moderation, escalation, or human review.&lt;/p&gt;</code></pre>
-</div>
-<div class="use-case-card">
-<pre><code>&lt;h3&gt;PR and reputation monitoring&lt;/h3&gt;
-&lt;p&gt;Track whether concentrated author activity is building around a company, policy, or public figure.&lt;/p&gt;</code></pre>
-</div>
-<div class="use-case-card">
-<pre><code>&lt;h3&gt;Product launch monitoring&lt;/h3&gt;
-&lt;p&gt;Measure whether launch-related chatter is building ahead of official announcements or broad press coverage.&lt;/p&gt;</code></pre>
-</div>
-</div>
-<div class="story-card" style="margin-top:0.9rem;">
-<h3>
-The operating assumption
-</h3>
-<p>
-Collective attention often moves before formal coverage does. If Reddit communities show measurable precursor behavior, the useful product is a triage signal: <strong>something important may be about to happen</strong>.
-</p>
-</div>
+<blockquote>
+<p><strong>The operating assumption:</strong> Collective attention often moves before formal coverage does. If Reddit communities show measurable precursor behavior, the useful product is a triage signal: <strong>something important may be about to happen</strong>.</p>
+</blockquote>
 <aside class="notes">
 <p>Target: 55 seconds.</p>
 <p>This slide is the business hook. Position the project as a monitoring and triage system, not a replacement for journalism or a perfect world-event detector.</p>
@@ -262,8 +250,9 @@ Collective attention often moves before formal coverage does. If Reddit communit
 <section id="data-and-ground-truth" class="slide level2">
 <h2>Data and Ground Truth</h2>
 <div class="columns">
-<div class="column" style="width:36%;">
-<h3 id="what-we-actually-analyzed">What We Actually Analyzed</h3>
+<div class="column" style="width:38%;">
+<h3 id="what-we-analyzed">What We Analyzed</h3>
+<div class="plain-table">
 <table class="caption-top">
 <thead>
 <tr class="header">
@@ -298,52 +287,20 @@ Collective attention often moves before formal coverage does. If Reddit communit
 </tr>
 </tbody>
 </table>
+</div>
+<p><br></p>
 <h3 id="event-mix">Event mix</h3>
-<table class="caption-top">
-<thead>
-<tr class="header">
-<th>Category</th>
-<th style="text-align: right;">Count</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>Breaking news</td>
-<td style="text-align: right;">13</td>
-</tr>
-<tr class="even">
-<td>Controversy</td>
-<td style="text-align: right;">7</td>
-</tr>
-<tr class="odd">
-<td>Product launch</td>
-<td style="text-align: right;">7</td>
-</tr>
-<tr class="even">
-<td>Disaster</td>
-<td style="text-align: right;">5</td>
-</tr>
-<tr class="odd">
-<td>Meme / viral</td>
-<td style="text-align: right;">3</td>
-</tr>
-</tbody>
-</table>
-<p>Example events in the catalog: Reddit blackout, Titan implosion, Sam Altman / OpenAI, GPT-4o, total solar eclipse, and the Trump assassination attempt.</p>
-</div><div class="column" style="width:64%;">
-<div class="figure-stack">
-<div class="quarto-figure quarto-figure-center">
-<figure>
-<p><img data-src="presentation_assets/figures/event_story_collage.png"></p>
-<figcaption>Representative event collage sourced from Wikimedia/Wikipedia thumbnails and downloaded locally for the deck.</figcaption>
-</figure>
-</div>
-<div class="quarto-figure quarto-figure-center">
-<figure>
-<p><img data-src="presentation_assets/figures/ground_truth_overview.png"></p>
-<figcaption>Ground-truth overview showing event timing and category mix.</figcaption>
-</figure>
-</div>
+<ul>
+<li>Breaking news: <strong>13</strong></li>
+<li>Controversy: <strong>7</strong></li>
+<li>Product launch: <strong>7</strong></li>
+<li>Disaster: <strong>5</strong></li>
+<li>Meme / viral: <strong>3</strong></li>
+</ul>
+</div><div class="column" style="width:62%;">
+<p><img data-src="presentation_assets/figures/event_story_collage.png" style="width:100.0%"></p>
+<div class="small-note">
+<p>Representative event collage sourced from Wikimedia/Wikipedia thumbnails.</p>
 </div>
 </div></div>
 <aside class="notes">
@@ -363,14 +320,16 @@ Collective attention often moves before formal coverage does. If Reddit communit
 </section>
 <section id="how-the-11-stage-pipeline-works" class="slide level2">
 <h2>How the 11-Stage Pipeline Works</h2>
-
-<img data-src="presentation_assets/figures/pipeline_diagram.png" style="width:100.0%" class="r-stretch quarto-figure-center"><p class="caption">Static pipeline diagram showing the two-machine architecture and the 11-stage flow.</p><div class="columns">
-<div class="column" style="width:52%;">
+<div class="figure-frame">
+<img src="presentation_assets/figures/pipeline_diagram.png" alt="Stage pipeline">
+</div>
+<div class="columns">
+<div class="column" style="width:50%;">
 <ul>
 <li><strong>EC2 handled the Spark work.</strong> Rolling windows, anomaly detection, propagation, spike shapes, and timing are I/O-heavy analytics jobs.</li>
 <li><strong>The A100 handled the GPU work.</strong> Aggregation, NER, sentiment, topics, and ML all benefit from RAPIDS and transformer inference.</li>
 </ul>
-</div><div class="column" style="width:48%;">
+</div><div class="column" style="width:50%;">
 <ul>
 <li><strong>The data contract is parquet.</strong> Each stage writes compact intermediate outputs that the next stage can consume offline.</li>
 <li><strong>That separation is why this deck is reproducible.</strong> We rebuilt the figures directly from <code>data/intermediate/</code> without rerunning the cloud pipeline.</li>
@@ -427,31 +386,23 @@ Collective attention often moves before formal coverage does. If Reddit communit
 </section>
 <section id="what-events-look-like-on-reddit" class="slide level2">
 <h2>What Events Look Like on Reddit</h2>
-<div class="columns">
-<div class="column" style="width:62%;">
 <div class="figure-frame">
 <img src="presentation_assets/figures/temporal_overview.png" alt="Temporal overview">
 </div>
-</div><div class="column" style="width:38%;">
-<div class="story-card tight-list">
-<h3>
-Stages 3-5 in one slide
-</h3>
+<div class="columns">
+<div class="column" style="width:50%;">
+<h3 id="what-we-learned-from-stages-3-5">What we learned from stages 3-5</h3>
 <ul>
-<li>
-<strong>Temporal patterns were useful.</strong> The peak slot is <code>Tue 16:00 UTC</code>, and weekday anomaly volume is materially higher than weekend volume.
-</li>
-<li>
-<strong>Ground-truth categories differ in timing.</strong> Breaking news and controversies skew midweek, while product and meme events tilt later in the week.
-</li>
-<li>
-<strong>We also ran propagation and spike-shape analysis.</strong> Those stages executed successfully, but the parameters need retuning before we treat them as final evidence.
-</li>
+<li><strong>Temporal patterns were useful.</strong> The peak slot is <code>Tue 16:00 UTC</code>, and weekday anomaly volume is materially higher than weekend volume.</li>
+<li><strong>Ground-truth categories differ in timing.</strong> Breaking news and controversies skew midweek, while product and meme events tilt later in the week.</li>
 </ul>
-<p style="margin-top:0.55rem;">
-This is why the timing signal appears here, while the propagation and morphology caveats move to the dedicated limitation slide.
-</p>
-</div>
+</div><div class="column fragment" style="width:50%;">
+<h3 id="what-still-needs-retuning">What still needs retuning</h3>
+<ul>
+<li>We also ran <strong>propagation</strong> and <strong>spike-shape</strong> analysis.</li>
+<li>Those stages executed successfully, but the parameters are not yet stable enough for final presentation claims.</li>
+<li>That is why the timing signal is shown here, while the caveats move to the dedicated limitation slide.</li>
+</ul>
 </div></div>
 <aside class="notes">
 <p>Target: 1 minute 10 seconds.</p>
@@ -473,23 +424,21 @@ This is why the timing signal appears here, while the propagation and morphology
 <div class="figure-frame">
 <img src="presentation_assets/figures/entities_overview.png" alt="Entities overview">
 </div>
-<div class="bottom-grid">
-<div class="bottom-card">
-<pre><code>&lt;h3&gt;What worked&lt;/h3&gt;
-&lt;ul&gt;
-  &lt;li&gt;&lt;strong&gt;NER was the strongest NLP stage.&lt;/strong&gt; We extracted &lt;strong&gt;63,614&lt;/strong&gt; entity rows across &lt;strong&gt;1,738&lt;/strong&gt; anomaly windows.&lt;/li&gt;
-  &lt;li&gt;&lt;strong&gt;The signal is narratively sensible.&lt;/strong&gt; Israel, Hamas, Reddit, Gaza, Trump, NFL, and Microsoft all surfaced from real anomaly windows.&lt;/li&gt;
-&lt;/ul&gt;</code></pre>
-</div>
-<div class="bottom-card">
-<pre><code>&lt;h3&gt;What remains partial&lt;/h3&gt;
-&lt;ul&gt;
-  &lt;li&gt;&lt;strong&gt;Sentiment covered only 2 windows.&lt;/strong&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;strong&gt;Topics covered 50 windows.&lt;/strong&gt;&lt;/li&gt;
-  &lt;li&gt;Business takeaway: entity extraction already turns spikes into recognizable stories, even before the full sentiment and topic sweeps are complete.&lt;/li&gt;
-&lt;/ul&gt;</code></pre>
-</div>
-</div>
+<div class="columns">
+<div class="column" style="width:50%;">
+<h3 id="what-worked">What worked</h3>
+<ul>
+<li><strong>NER was the strongest NLP stage:</strong> We extracted <strong>63,614</strong> entity rows across <strong>1,738</strong> anomaly windows.</li>
+<li><strong>The signal is narratively sensible:</strong> Israel, Hamas, Reddit, Gaza, Trump, NFL, and Microsoft all surfaced from real anomaly windows.</li>
+</ul>
+</div><div class="column fragment" style="width:50%;">
+<h3 id="what-remains-partial">What remains partial</h3>
+<ul>
+<li><strong>Sentiment covered only 2 windows.</strong></li>
+<li><strong>Topics covered 50 windows.</strong></li>
+<li>Business takeaway: Entity extraction already turns spikes into recognizable stories, even before the full sentiment and topic sweeps are complete.</li>
+</ul>
+</div></div>
 <aside class="notes">
 <p>Target: 1 minute 10 seconds.</p>
 <p>Keep this honest. The text signal is real and useful, but only the NER stage reached presentation-grade scale. Sentiment and topic modeling should be described as partial probes, not finished evidence.</p>
@@ -505,21 +454,17 @@ This is why the timing signal appears here, while the propagation and morphology
           display:block!important;
       }</style></aside>
 </section>
-<section id="ml-before-forecasting" class="slide level2">
-<h2>ML Before Forecasting</h2>
+<section id="ml-stages-before-forecasting" class="slide level2">
+<h2>ML Stages Before Forecasting</h2>
 <div class="figure-frame">
-<img src="presentation_assets/figures/ml_pre_forecast_overview.png" alt="ML before forecasting">
+<img src="presentation_assets/figures/ml_pre_forecast_overview.png" alt="ML preforecast">
 </div>
-<div class="bottom-grid single">
-<div class="bottom-card">
-<pre><code>&lt;h3&gt;Stages 9-10 were informative failures&lt;/h3&gt;
-&lt;ul&gt;
-  &lt;li&gt;&lt;strong&gt;Stage 9 classification failed cleanly.&lt;/strong&gt; All 500 predictions collapsed to &lt;code&gt;breaking_news&lt;/code&gt;.&lt;/li&gt;
-  &lt;li&gt;&lt;strong&gt;Stage 10 had ranking signal but poor thresholded decisions.&lt;/strong&gt; AUC was &lt;strong&gt;0.949&lt;/strong&gt;, but positive-class F1 was &lt;strong&gt;0.0&lt;/strong&gt; because only &lt;strong&gt;7 / 500&lt;/strong&gt; cases were truly sustained.&lt;/li&gt;
-  &lt;li&gt;&lt;strong&gt;Main lesson:&lt;/strong&gt; with this label volume, binary forecasting is a much better framing than five-class anomaly typing.&lt;/li&gt;
-&lt;/ul&gt;</code></pre>
-</div>
-</div>
+<h3 id="where-ml-classification-broke-down">Where ML Classification Broke Down</h3>
+<ul>
+<li><strong>Stage 9 classification failed cleanly.</strong> All 500 predictions collapsed to <code>breaking_news</code>.</li>
+<li><strong>Stage 10 had ranking signal but poor thresholded decisions.</strong> AUC was <strong>0.949</strong>, but positive-class F1 was <strong>0.0</strong> because only <strong>7 / 500</strong> cases were truly sustained.</li>
+<li><strong>Main lesson:</strong> With this label volume, binary forecasting is a much better framing than five-class anomaly typing.</li>
+</ul>
 <aside class="notes">
 <p>Target: 1 minute 5 seconds.</p>
 <p>Call these honest negatives. They are not wasted work; they tell us which framing is tractable at the current sample size.</p>
@@ -535,13 +480,12 @@ This is why the timing signal appears here, while the propagation and morphology
           display:block!important;
       }</style></aside>
 </section>
-<section id="strongest-result-48-hour-forecasting" class="slide level2">
-<h2>Strongest Result: 48-Hour Forecasting</h2>
-<div class="figure-frame">
-<img src="presentation_assets/figures/forecast_overview.png" alt="Forecast overview">
-</div>
+<section id="forecasting-stage-produced-the-strongest-results" class="slide level2">
+<h2>Forecasting Stage produced the strongest results</h2>
 <div class="columns">
-<div class="column" style="width:38%;">
+<div class="column" style="width:65%;">
+<p><img data-src="presentation_assets/figures/forecast_overview.png" style="width:100.0%"></p>
+</div><div class="column" style="width:35%;">
 <h3 id="held-out-performance">Held-out performance</h3>
 <table class="caption-top">
 <thead>
@@ -561,12 +505,12 @@ This is why the timing signal appears here, while the propagation and morphology
 </tr>
 </tbody>
 </table>
-</div><div class="column" style="width:62%;">
-<h3 id="why-this-is-the-key-story">Why this is the key story</h3>
+<p><br></p>
+<h3 id="why-forecasting-worked">Why forecasting worked</h3>
 <ul>
-<li>The model uses a <strong>48-hour precursor window</strong> ending before the event, so it cannot see the event itself.</li>
-<li>The strongest features are <strong>n_hours_data</strong>, <strong>author_concentration</strong>, <strong>mean_score</strong>, and <strong>volume_ratio</strong>.</li>
-<li>Highest-scored positives included <strong>Sam Altman fired</strong>, <strong>WWDC 2024</strong>, <strong>GPT-4o</strong>, and <strong>Mike Johnson elected</strong>.</li>
+<li>It asked a <strong>simpler binary question</strong>: will a major event happen soon?</li>
+<li>It used a <strong>true precursor window</strong>, so the model learned from lead-up behavior, not the event itself.</li>
+<li>Reddit shows useful early signals: <strong>persistent activity, concentrated authors, stronger engagement, and rising volume</strong>.</li>
 </ul>
 </div></div>
 <aside class="notes">
@@ -584,14 +528,8 @@ This is why the timing signal appears here, while the propagation and morphology
           display:block!important;
       }</style></aside>
 </section>
-<section id="what-didnt-work-yet" class="slide level2">
-<h2>What Didn’t Work Yet</h2>
-<div class="kicker">
-Single-slide honesty
-</div>
-<div class="accent-line">
-
-</div>
+<section id="what-didnt-work" class="slide level2">
+<h2>What Didn’t Work</h2>
 <div class="compact-table">
 <table class="caption-top">
 <colgroup>
@@ -602,8 +540,8 @@ Single-slide honesty
 <thead>
 <tr class="header">
 <th>Component</th>
-<th>Why it cannot be used as-is</th>
-<th>What we would fix next</th>
+<th>Key Issue</th>
+<th>Mitigation Strategy</th>
 </tr>
 </thead>
 <tbody>
@@ -640,6 +578,7 @@ Single-slide honesty
 </tbody>
 </table>
 </div>
+<p><br></p>
 <div class="small-note">
 <p>These are fixable parameter, coverage, and label-volume problems. They do not invalidate the pipeline; they tell us where the next iteration should focus.</p>
 </div>
@@ -658,9 +597,9 @@ Single-slide honesty
           display:block!important;
       }</style></aside>
 </section>
-<section id="what-this-means" class="slide level2">
-<h2>What This Means</h2>
-<h3 id="three-takeaways">Three takeaways</h3>
+<section id="what-our-project-demonstrates" class="slide level2">
+<h2>What Our Project Demonstrates</h2>
+<h3 id="three-key-takeaways">Three key takeaways</h3>
 <ol type="1">
 <li>Reddit already works as a <strong>large-scale detector of collective attention shifts</strong>.</li>
 <li><strong>Binary, event-anchored forecasting</strong> is much stronger than five-class anomaly labeling at the current sample size.</li>
@@ -684,11 +623,18 @@ Single-slide honesty
           display:block!important;
       }</style></aside>
 </section>
-<section id="thank-you" class="slide level2">
-<h2>Thank You</h2>
+<section id="section" class="slide level2">
+<h2></h2>
 <div class="thank-you">
-<p>Questions?</p>
-<p>Group 3 · Reddit as an Early Warning System</p>
+<p><br> <br></p>
+<h3 id="thank-you">Thank You</h3>
+<p><br></p>
+<div class="kicker">
+Reddit as an Early Warning System
+</div>
+<div class="small-note" style="font-size: 0.8rem;">
+<p>DATS 6450 · Group 3 Presentation · Spring 2026</p>
+</div>
 </div>
 <aside class="notes">
 <p>Keep this brief and pause for questions.</p>
@@ -706,26 +652,17 @@ Single-slide honesty
 </section>
 <section id="appendix" class="slide level2">
 <h2>Appendix</h2>
-<div class="columns">
-<div class="column" style="width:67%;">
 <div class="figure-frame">
-<img src="presentation_assets/figures/forecast_event_examples.png" alt="Forecast event examples">
+<img src="presentation_assets/figures/forecast_event_examples.png" alt="forecast examples" style="width: 70%;">
 </div>
-</div><div class="column" style="width:33%;">
-<h3 id="backup-notes">Backup Notes</h3>
+<h4 id="backup-notes">Backup Notes</h4>
 <ul>
 <li>The deck uses the current <code>events.csv</code> counts: <code>13 / 7 / 7 / 5 / 3</code>.</li>
 <li>Conservative anomaly alignment is <code>21 / 35</code> events within <code>+/-24h</code> on listed subreddits.</li>
 <li>Forecast examples perform best for product launches, controversies, and some breaking-news events with clear precursor chatter.</li>
 </ul>
-<h3 id="image-credits">Image Credits</h3>
-<ul>
-<li>Reddit screenshot: Wikipedia <code>Reddit</code></li>
-<li>Titan image: Wikipedia <code>Titan submersible implosion</code></li>
-<li>Sam Altman portrait: Wikipedia <code>Sam Altman</code></li>
-<li>Eclipse image: Wikipedia <code>Solar eclipse of April 8, 2024</code></li>
-</ul>
-</div></div>
+<h4 id="image-credits">Image Credits</h4>
+<p>Wikimedia / Wikipedia sources: <code>Reddit</code>, <code>Titan submersible implosion</code>, <code>Sam Altman</code>, <code>Solar eclipse of April 8, 2024</code>.</p>
 <aside class="notes">
 <p>Use this only for Q and A or if someone asks about the image sources or the strongest and weakest forecasted events.</p>
 <style type="text/css">

@@ -1,11 +1,11 @@
 ---
 title: "Reddit as an Early Warning System"
-subtitle: "A 12-minute presentation built from the staged outputs in `data/intermediate/`"
+subtitle: "DATS 6450 · Applied Big Data Analytics · Group 3 Final Project Presentation"
 author:
   - Venkatesh Nagarjuna
-  - Kartik Pruthi
   - Dhruv Rai
-date: "April 2026"
+  - Kartik Pruthi
+date: "28 April 2026"
 format:
   revealjs:
     theme: white
@@ -22,11 +22,11 @@ execute:
   echo: false
 ---
 
-## Reddit as an Early Warning System
+## Executive Summary
 
 :::: {.columns}
 ::: {.column width="43%"}
-<div class="kicker">DATS 6450 · Group 3</div>
+<div class="kicker">DATS 6450 · Group 3 Presentation</div>
 <div class="accent-line"></div>
 
 <div class="hero-subtitle">
@@ -34,19 +34,11 @@ Can Reddit act as a practical early-warning radar for real-world events?
 </div>
 
 <div class="hero-claim">
-<strong>Main story:</strong> at our current label volume, Reddit works better as a <strong>binary early-warning system</strong> than as a full event taxonomy engine.
+<strong>Main story:</strong> At our current label volume, Reddit works better as a <strong>binary early-warning system</strong> than as a full event taxonomy engine.
 </div>
 
-<div class="metric-grid">
-  <div class="metric-card"><span class="value">1.27B</span><span class="label">comments + submissions processed</span></div>
-  <div class="metric-card"><span class="value">478 GB</span><span class="label">raw Pushshift Reddit data</span></div>
-  <div class="metric-card"><span class="value">11</span><span class="label">pipeline stages</span></div>
-  <div class="metric-card"><span class="value">0.955</span><span class="label">best result: forecast AUC</span></div>
-</div>
 
-<div class="small-note">
-Every number and figure in this deck was regenerated from the local staged outputs under <code>data/intermediate/</code>.
-</div>
+
 :::
 
 ::: {.column width="57%"}
@@ -54,6 +46,29 @@ Every number and figure in this deck was regenerated from the local staged outpu
 :::
 ::::
 
+<br>
+
+:::: {.columns}
+::: {.column width="50%"}
+<div class="metric-grid">
+  <div class="metric-card"><span class="value">1.27B</span><span class="label">comments + submissions processed</span></div>
+  <div class="metric-card"><span class="value">478 GB</span><span class="label">raw Reddit data</span></div>
+</div>
+
+:::
+::: {.column width="50%"}
+<div class="metric-grid">
+  <div class="metric-card"><span class="value">11</span><span class="label">pipeline stages</span></div>
+  <div class="metric-card"><span class="value">0.955</span><span class="label">best result: forecast AUC</span></div>
+</div>
+:::
+::::
+
+<br>
+
+<div class="small-note">
+Every number and figure in this deck was generated from the staged outputs under <code>data/intermediate/</code>.
+</div>
 ::: {.notes}
 Target: 35 seconds.
 
@@ -62,32 +77,19 @@ Open with the thesis, not the tooling. We asked whether Reddit can behave like a
 
 ## Why This Matters
 
-<div class="kicker">Business Intelligence Framing</div>
-<div class="accent-line"></div>
+Business Intelligence context
 
-<div class="use-case-grid">
-  <div class="use-case-card">
-    <h3>Journalism and media desks</h3>
-    <p>Flag emerging stories before they peak on mainstream outlets, especially in niche communities that move first.</p>
-  </div>
-  <div class="use-case-card">
-    <h3>Trust and safety triage</h3>
-    <p>Spot coordinated attention spikes that may need moderation, escalation, or human review.</p>
-  </div>
-  <div class="use-case-card">
-    <h3>PR and reputation monitoring</h3>
-    <p>Track whether concentrated author activity is building around a company, policy, or public figure.</p>
-  </div>
-  <div class="use-case-card">
-    <h3>Product launch monitoring</h3>
-    <p>Measure whether launch-related chatter is building ahead of official announcements or broad press coverage.</p>
-  </div>
-</div>
+::: {.bullets}
+- **Journalism and media desks:** Flag emerging stories before they peak on mainstream outlets, especially in niche communities that move first.
 
-<div class="story-card" style="margin-top:0.9rem;">
-  <h3>The operating assumption</h3>
-  <p>Collective attention often moves before formal coverage does. If Reddit communities show measurable precursor behavior, the useful product is a triage signal: <strong>something important may be about to happen</strong>.</p>
-</div>
+- **PR and reputation monitoring:** Track whether concentrated author activity is building around a company, policy, or public figure.
+
+- **Trust and safety triage:** Spot coordinated attention spikes that may need moderation, escalation, or human review.
+
+- **Product launch monitoring:** Measure whether launch-related chatter is building ahead of official announcements or broad press coverage.
+:::
+
+> **The operating assumption:** Collective attention often moves before formal coverage does. If Reddit communities show measurable precursor behavior, the useful product is a triage signal: **something important may be about to happen**.
 
 ::: {.notes}
 Target: 55 seconds.
@@ -98,9 +100,10 @@ This slide is the business hook. Position the project as a monitoring and triage
 ## Data and Ground Truth
 
 :::: {.columns}
-::: {.column width="36%"}
-### What We Actually Analyzed
+::: {.column width="38%"}
+### What We Analyzed
 
+::: {.plain-table}
 | Metric | Value |
 |---|---:|
 | Time range | 14 months |
@@ -109,25 +112,25 @@ This slide is the business hook. Position the project as a monitoring and triage
 | Top subreddits | 500 |
 | Hourly rows after aggregation | 9.38M |
 | Curated events | 35 |
+:::
+
+<br> 
 
 ### Event mix
 
-| Category | Count |
-|---|---:|
-| Breaking news | 13 |
-| Controversy | 7 |
-| Product launch | 7 |
-| Disaster | 5 |
-| Meme / viral | 3 |
+- Breaking news: **13**
+- Controversy: **7**
+- Product launch: **7**
+- Disaster: **5**
+- Meme / viral: **3**
 
-Example events in the catalog: Reddit blackout, Titan implosion, Sam Altman / OpenAI, GPT-4o, total solar eclipse, and the Trump assassination attempt.
 :::
 
-::: {.column width="64%"}
-::: {.figure-stack}
-![Representative event collage sourced from Wikimedia/Wikipedia thumbnails and downloaded locally for the deck.](presentation_assets/figures/event_story_collage.png)
+::: {.column width="62%"}
+![](presentation_assets/figures/event_story_collage.png){width="100%"}
 
-![Ground-truth overview showing event timing and category mix.](presentation_assets/figures/ground_truth_overview.png)
+::: {.small-note}
+Representative event collage sourced from Wikimedia/Wikipedia thumbnails.
 :::
 :::
 ::::
@@ -140,15 +143,15 @@ Emphasize scale plus curation. The raw dataset is huge, but evaluation still dep
 
 ## How the 11-Stage Pipeline Works
 
-![Static pipeline diagram showing the two-machine architecture and the 11-stage flow.](presentation_assets/figures/pipeline_diagram.png){width="100%"}
+<div class="figure-frame"><img src="presentation_assets/figures/pipeline_diagram.png" alt="Stage pipeline"></div>
 
 :::: {.columns}
-::: {.column width="52%"}
+::: {.column width="50%"}
 - **EC2 handled the Spark work.** Rolling windows, anomaly detection, propagation, spike shapes, and timing are I/O-heavy analytics jobs.
 - **The A100 handled the GPU work.** Aggregation, NER, sentiment, topics, and ML all benefit from RAPIDS and transformer inference.
 :::
 
-::: {.column width="48%"}
+::: {.column width="50%"}
 - **The data contract is parquet.** Each stage writes compact intermediate outputs that the next stage can consume offline.
 - **That separation is why this deck is reproducible.** We rebuilt the figures directly from `data/intermediate/` without rerunning the cloud pipeline.
 :::
@@ -182,21 +185,23 @@ Lead with the success: anomaly detection is broad and clearly aligned with major
 
 ## What Events Look Like on Reddit
 
-:::: {.columns}
-::: {.column width="62%"}
 <div class="figure-frame"><img src="presentation_assets/figures/temporal_overview.png" alt="Temporal overview"></div>
+
+
+:::: {.columns}
+::: {.column width="50%"}
+### What we learned from stages 3-5
+
+- **Temporal patterns were useful.** The peak slot is `Tue 16:00 UTC`, and weekday anomaly volume is materially higher than weekend volume.
+- **Ground-truth categories differ in timing.** Breaking news and controversies skew midweek, while product and meme events tilt later in the week.
 :::
 
-::: {.column width="38%"}
-<div class="story-card tight-list">
-  <h3>Stages 3-5 in one slide</h3>
-  <ul>
-    <li><strong>Temporal patterns were useful.</strong> The peak slot is <code>Tue 16:00 UTC</code>, and weekday anomaly volume is materially higher than weekend volume.</li>
-    <li><strong>Ground-truth categories differ in timing.</strong> Breaking news and controversies skew midweek, while product and meme events tilt later in the week.</li>
-    <li><strong>We also ran propagation and spike-shape analysis.</strong> Those stages executed successfully, but the parameters need retuning before we treat them as final evidence.</li>
-  </ul>
-  <p style="margin-top:0.55rem;">This is why the timing signal appears here, while the propagation and morphology caveats move to the dedicated limitation slide.</p>
-</div>
+::: {.column width="50%" .fragment}
+### What still needs retuning
+
+- We also ran **propagation** and **spike-shape** analysis.
+- Those stages executed successfully, but the parameters are not yet stable enough for final presentation claims.
+- That is why the timing signal is shown here, while the caveats move to the dedicated limitation slide.
 :::
 ::::
 
@@ -210,23 +215,22 @@ This slide covers stages 3 through 5 without overselling propagation or spike sh
 
 <div class="figure-frame"><img src="presentation_assets/figures/entities_overview.png" alt="Entities overview"></div>
 
-<div class="bottom-grid">
-  <div class="bottom-card">
-    <h3>What worked</h3>
-    <ul>
-      <li><strong>NER was the strongest NLP stage.</strong> We extracted <strong>63,614</strong> entity rows across <strong>1,738</strong> anomaly windows.</li>
-      <li><strong>The signal is narratively sensible.</strong> Israel, Hamas, Reddit, Gaza, Trump, NFL, and Microsoft all surfaced from real anomaly windows.</li>
-    </ul>
-  </div>
-  <div class="bottom-card">
-    <h3>What remains partial</h3>
-    <ul>
-      <li><strong>Sentiment covered only 2 windows.</strong></li>
-      <li><strong>Topics covered 50 windows.</strong></li>
-      <li>Business takeaway: entity extraction already turns spikes into recognizable stories, even before the full sentiment and topic sweeps are complete.</li>
-    </ul>
-  </div>
-</div>
+:::: {.columns}
+::: {.column width="50%"}
+### What worked
+
+- **NER was the strongest NLP stage:** We extracted **63,614** entity rows across **1,738** anomaly windows.
+- **The signal is narratively sensible:** Israel, Hamas, Reddit, Gaza, Trump, NFL, and Microsoft all surfaced from real anomaly windows.
+:::
+
+::: {.column width="50%" .fragment}
+### What remains partial
+
+- **Sentiment covered only 2 windows.**
+- **Topics covered 50 windows.**
+- Business takeaway: Entity extraction already turns spikes into recognizable stories, even before the full sentiment and topic sweeps are complete.
+:::
+::::
 
 ::: {.notes}
 Target: 1 minute 10 seconds.
@@ -234,20 +238,15 @@ Target: 1 minute 10 seconds.
 Keep this honest. The text signal is real and useful, but only the NER stage reached presentation-grade scale. Sentiment and topic modeling should be described as partial probes, not finished evidence.
 :::
 
-## ML Before Forecasting
+## ML Stages Before Forecasting
 
-<div class="figure-frame"><img src="presentation_assets/figures/ml_pre_forecast_overview.png" alt="ML before forecasting"></div>
+<div class="figure-frame"><img src="presentation_assets/figures/ml_pre_forecast_overview.png" alt="ML preforecast"></div>
 
-<div class="bottom-grid single">
-  <div class="bottom-card">
-    <h3>Stages 9-10 were informative failures</h3>
-    <ul>
-      <li><strong>Stage 9 classification failed cleanly.</strong> All 500 predictions collapsed to <code>breaking_news</code>.</li>
-      <li><strong>Stage 10 had ranking signal but poor thresholded decisions.</strong> AUC was <strong>0.949</strong>, but positive-class F1 was <strong>0.0</strong> because only <strong>7 / 500</strong> cases were truly sustained.</li>
-      <li><strong>Main lesson:</strong> with this label volume, binary forecasting is a much better framing than five-class anomaly typing.</li>
-    </ul>
-  </div>
-</div>
+### Where ML Classification Broke Down
+
+- **Stage 9 classification failed cleanly.** All 500 predictions collapsed to `breaking_news`.
+- **Stage 10 had ranking signal but poor thresholded decisions.** AUC was **0.949**, but positive-class F1 was **0.0** because only **7 / 500** cases were truly sustained.
+- **Main lesson:** With this label volume, binary forecasting is a much better framing than five-class anomaly typing.
 
 ::: {.notes}
 Target: 1 minute 5 seconds.
@@ -255,27 +254,32 @@ Target: 1 minute 5 seconds.
 Call these honest negatives. They are not wasted work; they tell us which framing is tractable at the current sample size.
 :::
 
-## Strongest Result: 48-Hour Forecasting
-
-<div class="figure-frame"><img src="presentation_assets/figures/forecast_overview.png" alt="Forecast overview"></div>
+## Forecasting Stage produced the strongest results
 
 :::: {.columns}
-::: {.column width="38%"}
+::: {.column width="65%"}
+![](presentation_assets/figures/forecast_overview.png){width="100%"}
+
+:::
+
+::: {.column width="35%"}
+
+
 ### Held-out performance
 
 | AUC | F1 | Precision | Recall |
 |---:|---:|---:|---:|
 | 0.955 | 0.767 | 0.852 | 0.697 |
-:::
 
-::: {.column width="62%"}
-### Why this is the key story
+<br>
 
-- The model uses a **48-hour precursor window** ending before the event, so it cannot see the event itself.
-- The strongest features are **n_hours_data**, **author_concentration**, **mean_score**, and **volume_ratio**.
-- Highest-scored positives included **Sam Altman fired**, **WWDC 2024**, **GPT-4o**, and **Mike Johnson elected**.
+### Why forecasting worked
+- It asked a **simpler binary question**: will a major event happen soon?
+- It used a **true precursor window**, so the model learned from lead-up behavior, not the event itself.
+- Reddit shows useful early signals: **persistent activity, concentrated authors, stronger engagement, and rising volume**.
 :::
 ::::
+
 
 ::: {.notes}
 Target: 1 minute 25 seconds.
@@ -283,14 +287,12 @@ Target: 1 minute 25 seconds.
 This is the money slide. Explain the setup, the stability across folds, and the feature story: not just giant spikes, but concentrated and persistent precursor behavior.
 :::
 
-## What Didn’t Work Yet
+## What Didn’t Work
 
-<div class="kicker">Single-slide honesty</div>
-<div class="accent-line"></div>
 
 <div class="compact-table">
 
-| Component | Why it cannot be used as-is | What we would fix next |
+| Component | Key Issue | Mitigation Strategy |
 |---|---|---|
 | Propagation | A 48-hour overlap rule collapsed the graph into one giant component. | Tighten to <=6 hours and require entity/topic overlap. |
 | Spike shapes | 99.2% of windows became `double_peak`, which is a heuristic sensitivity issue. | Sweep `find_peaks` thresholds or move to template fitting. |
@@ -300,6 +302,8 @@ This is the money slide. Explain the setup, the stability across folds, and the 
 | Sustain / decay | AUC was high, but thresholded positive precision and recall were zero. | Use class weighting and calibrate the decision threshold. |
 
 </div>
+
+<br>
 
 <div class="small-note">
 These are fixable parameter, coverage, and label-volume problems. They do not invalidate the pipeline; they tell us where the next iteration should focus.
@@ -311,9 +315,9 @@ Target: 1 minute 25 seconds.
 This slide should increase credibility. Move briskly row by row and make the fixes sound concrete and tractable.
 :::
 
-## What This Means
+## What Our Project Demonstrates 
 
-### Three takeaways
+### Three key takeaways
 
 1. Reddit already works as a **large-scale detector of collective attention shifts**.
 2. **Binary, event-anchored forecasting** is much stronger than five-class anomaly labeling at the current sample size.
@@ -327,12 +331,22 @@ Target: 50 seconds.
 End by repeating the central reframing: this is an early-warning and triage engine first, not yet a fully mature event taxonomy system.
 :::
 
-## Thank You
+## 
 
 ::: {.thank-you}
-Questions?
 
-Group 3 · Reddit as an Early Warning System
+<br> <br>
+
+### Thank You
+
+<br>
+
+<div class="kicker">Reddit as an Early Warning System</div>
+
+<div class="small-note" style="font-size: 0.8rem;">
+DATS 6450 · Group 3 Presentation · Spring 2026
+</div>
+
 :::
 
 ::: {.notes}
@@ -341,26 +355,19 @@ Keep this brief and pause for questions.
 
 ## Appendix
 
-:::: {.columns}
-::: {.column width="67%"}
-<div class="figure-frame"><img src="presentation_assets/figures/forecast_event_examples.png" alt="Forecast event examples"></div>
-:::
+<div class="figure-frame"><img src="presentation_assets/figures/forecast_event_examples.png" alt="forecast examples" style="width: 70%;"></div>
 
-::: {.column width="33%"}
-### Backup Notes
+#### Backup Notes
 
 - The deck uses the current `events.csv` counts: `13 / 7 / 7 / 5 / 3`.
 - Conservative anomaly alignment is `21 / 35` events within `+/-24h` on listed subreddits.
 - Forecast examples perform best for product launches, controversies, and some breaking-news events with clear precursor chatter.
 
-### Image Credits
+#### Image Credits
 
-- Reddit screenshot: Wikipedia `Reddit`
-- Titan image: Wikipedia `Titan submersible implosion`
-- Sam Altman portrait: Wikipedia `Sam Altman`
-- Eclipse image: Wikipedia `Solar eclipse of April 8, 2024`
-:::
-::::
+Wikimedia / Wikipedia sources: `Reddit`, `Titan submersible implosion`, `Sam Altman`, `Solar eclipse of April 8, 2024`.
+
+
 
 ::: {.notes}
 Use this only for Q and A or if someone asks about the image sources or the strongest and weakest forecasted events.
