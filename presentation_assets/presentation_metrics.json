@@ -1,0 +1,89 @@
+{
+  "dataset": {
+    "comments_total": 1187443795,
+    "submissions_total": 87224551,
+    "total_posts": 1274668346,
+    "hourly_rows": 9381693,
+    "subreddits": 500,
+    "date_min": "2023-06-01 00:00:00",
+    "date_max": "2024-07-31 23:00:00"
+  },
+  "ground_truth": {
+    "n_events": 35,
+    "category_counts": {
+      "breaking_news": 13,
+      "controversy": 7,
+      "product_launch": 7,
+      "disaster": 5,
+      "meme_viral": 3
+    }
+  },
+  "stage2": {
+    "anomaly_windows": 31938,
+    "subreddits_with_anomaly": 499,
+    "median_peak_z": 3.673655127972814,
+    "p95_peak_z": 9.164710462501242
+  },
+  "coverage": {
+    "matched_events": 21,
+    "total_events": 35,
+    "by_category": {
+      "breaking_news": {
+        "sum": 10,
+        "count": 13
+      },
+      "controversy": {
+        "sum": 4,
+        "count": 7
+      },
+      "product_launch": {
+        "sum": 4,
+        "count": 7
+      },
+      "disaster": {
+        "sum": 2,
+        "count": 5
+      },
+      "meme_viral": {
+        "sum": 1,
+        "count": 3
+      }
+    }
+  },
+  "stage6": {
+    "entity_rows": 63614,
+    "unique_entities": 36082,
+    "windows_with_entities": 1738
+  },
+  "stage7": {
+    "rows": 2
+  },
+  "stage8": {
+    "rows": 50
+  },
+  "stage9": {
+    "predictions": 500
+  },
+  "stage10": {
+    "predictions": 500,
+    "auc": 0.9494949494949494,
+    "f1": 0.0
+  },
+  "stage11": {
+    "predictions": 138,
+    "positives": 33,
+    "negatives": 105,
+    "auc": 0.954978354978355,
+    "ap": 0.9093278016464589,
+    "precision": 0.8518518518518519,
+    "recall": 0.696969696969697,
+    "f1": 0.7666666666666667,
+    "event_probability_by_category": {
+      "breaking_news": 0.6348076972823876,
+      "controversy": 0.6470602005720139,
+      "product_launch": 0.6527380858148847,
+      "disaster": 0.49081273674964904,
+      "meme_viral": 0.47999998927116394
+    }
+  }
+}

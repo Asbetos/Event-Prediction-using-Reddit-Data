@@ -33,6 +33,7 @@ outputs/
 # Quarto build artifacts
 website/_site/
 website/.quarto/
+presentation_files/
 
 # Claude Code
 .claude/
@@ -44,3 +45,6 @@ website/.quarto/
 logs/
 *.log
 *.pid
+
+/.quarto/
+**/*.quarto_ipynb
