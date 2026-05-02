@@ -31,9 +31,6 @@ outputs/
 # offline analysis. Re-running the cloud pipeline overwrites the same files.
 
 # Quarto build artifacts
-website/_site/
-website/.quarto/
-presentation_files/
 presentation_assets/screenshots/
 
 # Claude Code

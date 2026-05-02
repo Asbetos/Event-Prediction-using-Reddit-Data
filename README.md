@@ -1,168 +1,154 @@
 # Reddit as an Early Warning System
 
-Detect, characterize, and forecast real-world events from 478 GB of Reddit comments and submissions (June 2023 — July 2024) across the top 500 subreddits, using an 11-stage pipeline that splits the work between PySpark on EC2 and a RAPIDS / Hugging Face / cuML stack on a RunPod A100 GPU pod.
+This repository contains our DATS 6450 final project on detecting, characterizing, and forecasting real-world events from Reddit activity at scale.
 
-**Course:** DATS 6450 — Big Data Analytics · **Team:** Group 3 (Venkatesh Nagarjuna · Kartik Pruthi · Dhruv Rai)
+We process Reddit comments and submissions from June 2023 to July 2024 and use an 11-stage pipeline spanning:
 
-> **The full final report (10-page narrative + technical appendix) is in [`FINAL_REPORT.md`](FINAL_REPORT.md). A condensed run sheet of the actual numerical results is in [`RESULTS.md`](RESULTS.md).**
+- large-scale aggregation
+- anomaly detection
+- temporal and propagation analysis
+- named entity extraction
+- sentiment and topic modeling
+- event classification and forecasting
 
-## What's in this repo
+## Repository Structure
 
-```
+```text
 .
-├── FINAL_REPORT.md                  Final project report (narrative + technical appendix)
-├── RESULTS.md                       One-page summary of the actual numbers
-├── README.md                        This file
-├── PROJECT_REPORT.md / HANDOFF.md   Earlier interim docs (kept for provenance)
-├── EXECUTION_PLAN.md / EXECUTION_CHECKLIST.md
+├── Code/
+│   ├── analysis/          Offline analysis and asset-generation scripts
+│   ├── config/            Shared settings and Spark configuration
+│   ├── data/
+│   │   ├── ground_truth/  Curated event labels
+│   │   └── intermediate/  Stage output parquet artifacts
+│   ├── outputs/           Generated numeric summaries
+│   ├── pipeline/          Spark / CPU stages
+│   ├── runpod/            GPU stages and orchestration scripts
+│   └── utils/             Shared helpers
 │
-├── config/                          S3 paths, date range, thresholds, Spark session
-├── pipeline/                        EC2 / Spark stages 2–5 + Spark MLlib baseline
-├── runpod/                          GPU stages 1, 6–11 + orchestration scripts
-├── utils/                           Shared spark / text / viz helpers
-├── analysis/
-│   ├── generate_eda_figures.py      Rebuild Stage 2–5 figures from local data
-│   └── generate_report_figures.py   Build NLP/ML figures (Stages 6–11) from local data
+├── Final-Project-Report/
+│   ├── Final-Project-Report.pdf
+│   └── figures/report/    Figures used in the final report
 │
-├── data/
-│   ├── ground_truth/events.csv      35 manually curated events
-│   └── intermediate/                All 17 stage-output parquet files (~84 MB)
+├── Final-Project-Presentation/
+│   ├── presentation.qmd
+│   ├── presentation.css
+│   ├── presentation.html
+│   ├── presentation_assets/
+│   └── presentation_files/
 │
-├── website/                         Quarto site (index, methodology, eda, nlp, ml)
-│   └── figures/                     20 PNG figures referenced from FINAL_REPORT.md
+├── Final-Project-Proposal/
+│   └── project_proposal_group3.pdf
 │
-├── setup.sh                         EC2 environment setup
-├── setup_lightning.sh               Lightning.ai variant
-└── project_proposal_group3.pdf
+└── setup.sh
 ```
 
-The intermediate parquet outputs from every stage ship with the repo under `data/intermediate/`, so the analysis and figure-generation steps work offline without re-running the cloud pipeline.
+## Final Deliverables
 
-## Quick start (analysis only, offline)
+- Final report: `Final-Project-Report/Final-Project-Report.pdf`
+- Final presentation source: `Final-Project-Presentation/presentation.qmd`
+- Final presentation render: `Final-Project-Presentation/presentation.html`
+
+## Quick Start
+
+### 1. Offline analysis and figure regeneration
+
+Run these from the repository root:
 
 ```bash
-conda activate base
-cd Reddit-Event-Prediction-Final
-
-# Rebuild every figure used in the report from local intermediate data
-python analysis/generate_eda_figures.py
-python analysis/generate_report_figures.py
-
-# Optional: render the Quarto website
-cd website && quarto render
+python Code/analysis/summarize_results.py
+python Code/analysis/generate_eda_figures.py
+python Code/analysis/generate_report_figures.py
+python Code/analysis/generate_presentation_assets.py
 ```
 
-Reads from `data/intermediate/*.parquet`, writes to `website/figures/*.png`. ~10 seconds total.
+These scripts read from:
 
-## Architecture (cloud, full pipeline)
+- `Code/data/intermediate/`
+- `Code/data/ground_truth/events.csv`
 
-| Environment | Spec | Stages | Why |
-|---|---|---|---|
-| **EC2** `t3.large` | 2 vCPU, 8 GB RAM, PySpark 3.5 | 2 – 5, Spark MLlib baseline | Distributed reads from S3, window functions, joins, aggregation |
-| **RunPod / Lightning.ai** | A100 80 GB, RAPIDS, PyTorch | 1, 6 – 11 | cuDF aggregation of 478 GB; transformer NER/sentiment; BERTopic; cuML RandomForest / XGBoost |
+and write to:
 
-S3 is the shared bus. We use a separate raw bucket (`reddit-event-prediction-1776283460`, read-only AWS Academy creds) and processed bucket (`reddit-event-prediction-147390571732-processed-20260423`, write creds) — see [`config/settings.py`](config/settings.py).
+- `Code/outputs/stage_results.json`
+- `Final-Project-Report/figures/report/`
+- `Final-Project-Presentation/presentation_assets/`
 
-## End-to-end pipeline
+### 2. Render the presentation
 
-| # | Stage | Where | Output | Runtime |
-|---|---|---|---|---|
-| 1 | GPU aggregation | RunPod | `hourly_counts`, `daily_counts`, `subreddit_stats` | 45 – 90 min |
-| 2 | Anomaly detection (rolling z) | EC2 | `anomaly_windows` | 5 – 10 min |
-| 3 | Cross-subreddit propagation | EC2 | `propagation_events` | 5 – 10 min |
-| 4 | Spike shapes & engagement | EC2 | `spike_profiles` | 10 – 15 min |
-| 5 | Temporal patterns | EC2 | `temporal_patterns` | 5 – 10 min |
-| 6 | NER (spaCy `en_core_web_trf`) | RunPod | `entities`, `entity_cooccurrence` | 2 – 4 h |
-| 7 | Sentiment (Cardiff Twitter RoBERTa) | RunPod | `sentiment` | 2 – 4 h |
-| 8 | Topics (BERTopic + cuML UMAP/HDBSCAN) | RunPod | `topics`, `topic_details` | 30 – 90 min |
-| 9 | Event classification (cuML RF + XGBoost, LOOCV) | RunPod | `classifications`, `feature_importance` | 10 – 20 min |
-| 10 | Sustain / decay (cuML RF, first-4h features) | RunPod | `sustain_predictions`, `sustain_feature_importance` | 10 – 20 min |
-| 11 | Event forecasting (5-fold stratified, 48 h precursor) | RunPod | `forecast_results`, `forecast_feature_importance`, `forecast_fold_metrics` | 10 – 20 min |
-| — | Spark MLlib baseline (course req.) | EC2 | console metrics | 5 – 10 min |
+```bash
+quarto render Final-Project-Presentation/presentation.qmd
+```
 
-End-to-end wall-clock: ~4 – 6 hours (Phases 3 and 4 can run in parallel on their respective machines). Cost on RunPod A100 + EC2 t3.large: ~\$20 – \$50.
+or:
 
-## Headline results (full numbers in `RESULTS.md` and `FINAL_REPORT.md`)
+```bash
+cd Final-Project-Presentation
+quarto render presentation.qmd
+```
 
-| | |
+## Headline Results
+
+| Metric | Value |
 |---|---|
 | Comments processed | **1.19 B** |
 | Submissions processed | **87.2 M** |
-| Hourly time-series rows | **9.38 M** |
-| Anomaly windows detected (z>3) | **31,938** across **499 / 500** subreddits |
+| Hourly subreddit rows | **9.38 M** |
+| Anomaly windows detected | **31,938** across **499 / 500** subreddits |
 | Stage 6 entities extracted | **63,614** rows / **36,082** unique entities / **1,738** windows |
 | Stage 11 forecasting AUC | **0.955** (5-fold CV); F1 **0.77**; precision **0.85**; recall **0.70** |
-| Stage 10 sustain AUC | **0.949**; class-imbalanced (493 decayed / 7 sustained), so positive precision/recall = 0 |
+| Stage 10 sustain AUC | **0.949**; positive precision/recall = 0 under extreme imbalance |
 
-## Reproducing the full cloud pipeline
+## Ground Truth
 
-### 0. Environment setup
+The curated event set contains 35 events across five categories:
+
+| Category | Count |
+|---|---:|
+| Breaking news | 13 |
+| Controversy | 7 |
+| Product launch | 7 |
+| Disaster | 5 |
+| Meme / viral | 3 |
+
+Ground-truth file: `Code/data/ground_truth/events.csv`
+
+## Full Pipeline Execution
+
+The full pipeline still assumes the original split between local CPU / Spark stages and GPU stages.
+
+### Environment setup
 
 ```bash
-# On EC2
 chmod +x setup.sh && ./setup.sh
-
-# On RunPod
-export RAW_S3_BUCKET=reddit-event-prediction-1776283460
-export PROCESSED_S3_BUCKET=reddit-event-prediction-147390571732-processed-20260423
-chmod +x runpod/setup_runpod.sh && ./runpod/setup_runpod.sh
+chmod +x Code/runpod/setup_runpod.sh && ./Code/runpod/setup_runpod.sh
 ```
 
-### 1. Stage 1 — GPU aggregation (RunPod)
+### Stage execution examples
+
+From the repository root:
 
 ```bash
-python runpod/stage1_aggregate_gpu.py
+python Code/runpod/stage1_aggregate_gpu.py
+python -m compileall Code
 ```
 
-Streams 478 GB of raw parquet through cuDF month-by-month, with monthly checkpoints to S3 so an interrupted run resumes cleanly.
-
-### 2. Stages 2 – 5 — EC2 / Spark
+From inside `Code/`:
 
 ```bash
 python -m pipeline.stage2_anomaly_detection
 python -m pipeline.stage3_propagation
 python -m pipeline.stage4_engagement
 python -m pipeline.stage5_temporal
-```
-
-Stages 3 – 5 are independent; each only depends on Stage 2 + Stage 1 outputs.
-
-### 3. Stages 6 – 11 — GPU NLP and ML (RunPod)
-
-```bash
 bash runpod/run_all_gpu.sh
-```
-
-Orchestrates: Stage 6 → 7 → 8 sequentially on the GPU, plus Stages 10 / 11 on CPU EPYC cores in parallel (`FORCE_CPU=1`), then Stage 9 last because it joins all earlier NLP outputs. Falls back gracefully when cuDF / cuML are unavailable.
-
-### 4. Optional — Spark MLlib baseline + website
-
-```bash
 python -m pipeline.stage_ml_spark
-cd website && quarto render
 ```
 
-## Ground truth
+## Notes
 
-35 manually curated events spanning June 2023 – July 2024:
+- The `Code/analysis` scripts now write report outputs to `Final-Project-Report/` and presentation outputs to `Final-Project-Presentation/`.
+- The raw cloud pipeline stages in `Code/pipeline/` and `Code/runpod/` still depend on the appropriate local environment, Spark, GPU libraries, and/or cloud credentials.
 
-| Category | n | Examples |
-|---|---|---|
-| Breaking news | 15 | Hamas attack, Sam Altman returns to OpenAI, Trump assassination attempt, total solar eclipse |
-| Controversy | 7 | Reddit API protest, Sam Altman fired, Biden-Trump debate, Unity pricing |
-| Product launch | 7 | Threads launch, iPhone 15, GPT-4o, Apple Intelligence |
-| Disaster | 4 | OceanGate Titan, Maui wildfires, Baltimore bridge, Alaska Airlines blowout |
-| Meme/viral | 3 | Barbenheimer, Taylor Swift Super Bowl, Black Friday |
+## License
 
-Full list: [`data/ground_truth/events.csv`](data/ground_truth/events.csv).
+MIT License
 
-## Tools & versions
-
-- **PySpark** 3.5 · **RAPIDS** cuDF, cuML · **PyTorch** with CUDA · **Hugging Face transformers** 4.36+
-- **spaCy** 3.7+ with `en_core_web_trf` · **`cardiffnlp/twitter-roberta-base-sentiment-latest`` · **BERTopic** + `all-MiniLM-L6-v2`
-- **XGBoost** 2.0+ · **scikit-learn** 1.3+ · **NetworkX** 3.1+
-- **Quarto** 1.4 · **matplotlib**, **plotly**, **wordcloud**
-
-## License & credits
-
-Course project for DATS 6450, Spring 2026. Reddit data via the [Pushshift](https://pushshift.io) archive. NLP models from spaCy and Hugging Face Hub.
